@@ -1,4 +1,11 @@
 from piece import *
+import numpy as np
+
+class MoveType(Enum):
+    REGULAR = 1
+    CAPTURE = 2
+    CASTLE = 3
+    ENPASSANT = 4
 
 class ChessBoard():
     def __init__(self):
@@ -11,26 +18,29 @@ class ChessBoard():
                                    PieceType.KNIGHT,
                                    PieceType.ROOK]
         self.board = self._initial_position()  
+        self.blackKing = (0,4)
+        self.whiteKing = (7,4)
 
     @property
     def back_rank_layout(self):
         return self.__back_rank_layout
 
     def _initial_position(self):
-        # Create an empty 8x8 board represented by a list of lists
-        board = [[None for _ in range(8)] for _ in range(8)]
+        # Create an empty 8x8 board using numpy
+        board = np.full((8, 8), None, dtype=object)  # Initially set all positions to None
         
         # Place black pieces (row 0 and row 1)
-        board[0] = [self._create_piece(PieceColor.BLACK, piece_type, 0, y) 
-                    for y, piece_type in enumerate(self.back_rank_layout)]
+        for y, piece_type in enumerate(self.back_rank_layout):
+            board[0, y] = self._create_piece(PieceColor.BLACK, piece_type, 0, y)
         board[1] = [Pawn(PieceColor.BLACK, (1, y)) for y in range(8)]
         
         # Place white pieces (row 6 and row 7)
         board[6] = [Pawn(PieceColor.WHITE, (6, y)) for y in range(8)]
-        board[7] = [self._create_piece(PieceColor.WHITE, piece_type, 7, y) 
-                    for y, piece_type in enumerate(self.back_rank_layout)]
+        for y, piece_type in enumerate(self.back_rank_layout):
+            board[7, y] = self._create_piece(PieceColor.WHITE, piece_type, 7, y)
         
         return board
+
 
     def _create_piece(self, color: PieceColor, piece_type: PieceType, row: int, col: int):
         """
@@ -49,22 +59,96 @@ class ChessBoard():
         elif piece_type == PieceType.KING:
             return King(color, (row, col))
         else:
-            raise ValueError(f"Invalid piece type: {piece_t}")
+            raise ValueError(f"Invalid piece type: {piece_type}")
 
+    def _is_checked(self, turn: PieceColor) -> bool:
+        """
+        Return true if the king of the given color is checked
+        """
+        kingPosition = self.whiteKing if turn == PieceColor.WHITE else self.blackKing
+        attacked_pieces = [] # coords of all the pieces being attacked by the opponent
+
+
+        for piece in self.board.flat:
+            if piece and piece.color != turn:
+                # get only the moves that have a piece in the destination coordinate
+                attacked_pieces.extend([(x,y) for (_,_,x,y) in piece.get_moves(self.board) if self.board[x][y]])
+
+        return kingPosition in attacked_pieces
     
-    def _apply_move(self, x: int, y: int, x2: int, y2: int) -> None:
+    def gen_valid_moves(self, turn: PieceColor) -> list[tuple[int,int,int,int]]:
         """
-        Changes pieces positions in order to apply the move
-        (x,y) -> current coordinate of the piece to be moved
-        (x2,y2) -> destination coordinate for the piece being moved
+        Generate a list with all the valid moves for a given color in the current chess position
         """
+        valid_moves = []
+        moves = []
 
-        orig = self.board[x][y] 
-        dest = self.board[x2][y2]         
+        # first get all the spatially passible moves
+        for piece in self.board.flat:
+            if piece and piece.color == turn:
+                moves.extend(piece.get_moves(self.board))
 
-        self.board[x2][y2] = orig 
+        """
+        Iterate over all the moves to check if they're valid.
+        First we apply the move in the board.
+        If the king is checked in the resulting board, the move isn't valid. 
+        """
+        for move in moves:
+            piece_captured = self._apply_move(move)
+            
+            if(not self._is_checked(turn)):
+                valid_moves.append(move)
+
+            (x,y,x2,y2) = move
+
+            # undo the changes made on the board in _apply_move so we can repeat the process
+            self.board[x][y] = self.board[x2,y2]
+            self.board[x][y].update_position((x,y))
+
+            if(self.board[x][y].type == PieceType.KING):
+                if(turn == PieceColor.BLACK):
+                    self.blackKing = (x,y)
+                else:
+                    self.whiteKing = (x,y)
+
+            self.board[x2][y2] = piece_captured 
+
+        return valid_moves                
+
+    def _apply_move(self, move: tuple[int,int,int,int]) -> None | Piece:
+        """
+        Changes piece positions in order to apply the move
+        """
+        (x,y,x2,y2) = move
+
+        # code to performe a regular move or a capture move
+        piece = self.board[x][y]
+        piece.update_position((x2,y2))
+        
+        captured_piece = self.board[x2][y2] 
+
+        # putting the piece in the destination square
+        self.board[x2][y2] = piece 
+
+        # emptying the square the piece was
         self.board[x][y] = None
 
+        # code to performe enPassant capture
+        # ...
+
+        # code to performe castle move
+        # ...
+
+        # updates king position if necessary
+        if piece.type == PieceType.KING:
+            if(piece.color == PieceColor.BLACK):
+                self.blackKing = (x2,y2)
+            else:
+                self.whiteKing = (x2,y2)
+
+        self.board[x2][y2].state = PieceState.MOVED
+
+        return captured_piece
 
     def print_board(self):
         """

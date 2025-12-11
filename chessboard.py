@@ -1,12 +1,6 @@
 from piece import *
 import numpy as np
 
-class MoveType(Enum):
-    REGULAR = 1
-    CAPTURE = 2
-    CASTLE = 3
-    ENPASSANT = 4
-
 class ChessBoard():
     def __init__(self):
         self.__back_rank_layout = [PieceType.ROOK, 
@@ -18,8 +12,6 @@ class ChessBoard():
                                    PieceType.KNIGHT,
                                    PieceType.ROOK]
         self.board = self._initial_position()  
-        self.blackKing = (0,4)
-        self.whiteKing = (7,4)
 
     @property
     def back_rank_layout(self):
@@ -65,25 +57,26 @@ class ChessBoard():
         """
         Return true if the king of the given color is checked
         """
-        kingPosition = self.whiteKing if turn == PieceColor.WHITE else self.blackKing
-        attacked_pieces = [] # coords of all the pieces being attacked by the opponent
-
-
         for piece in self.board.flat:
-            if piece and piece.color != turn:
-                # get only the moves that have a piece in the destination coordinate
-                attacked_pieces.extend([(x,y) for (_,_,x,y) in piece.get_moves(self.board) if self.board[x][y]])
-
-        return kingPosition in attacked_pieces
+            # Empty square or friendly piece
+            if not piece or piece.color == turn:
+                continue
+            
+            # check for moves that attack the king  
+            if [move for move in piece.get_moves(self.board) 
+                if self.board[move.coords[2]][move.coords[3]] and self.board[move.coords[2]][move.coords[3]].type == PieceType.KING and self.board[move.coords[2]][move.coords[3]].color == turn]:
+                return True
+        
+        return False
     
-    def gen_valid_moves(self, turn: PieceColor) -> list[tuple[int,int,int,int]]:
+    def gen_valid_moves(self, turn: PieceColor, lastMove: Move | None = None) -> list[Move]:
         """
         Generate a list with all the valid moves for a given color in the current chess position
         """
         valid_moves = []
         moves = []
 
-        # first get all the spatially passible moves
+        # first get all the spatially possible captures and normal moves
         for piece in self.board.flat:
             if piece and piece.color == turn:
                 moves.extend(piece.get_moves(self.board))
@@ -94,58 +87,115 @@ class ChessBoard():
         If the king is checked in the resulting board, the move isn't valid. 
         """
         for move in moves:
+            (x,y) = move.coords[0:2]
+            old_state = self.board[x][y].state
+
+            # temporarily appying the move so we can check if it's valid
             piece_captured = self._apply_move(move)
             
             if(not self._is_checked(turn)):
                 valid_moves.append(move)
 
-            (x,y,x2,y2) = move
+            # undo the move so we can repeat the process
+            self._undo_move(move,piece_captured,old_state)
 
-            # undo the changes made on the board in _apply_move so we can repeat the process
-            self.board[x][y] = self.board[x2,y2]
-            self.board[x][y].update_position((x,y))
+        """
+        checking for available en passant captures
+        """
 
-            if(self.board[x][y].type == PieceType.KING):
-                if(turn == PieceColor.BLACK):
-                    self.blackKing = (x,y)
-                else:
-                    self.whiteKing = (x,y)
+        # Row where a pawn must be to perform en passant
+        # Aux tells which direction that pawn moves
+        row, aux = (4, 1) if turn == PieceColor.BLACK else (3, -1)
 
-            self.board[x2][y2] = piece_captured 
+        for piece in self.board[row]:
+            # Only consider pawns
+            if not piece or piece.type != PieceType.PAWN:
+                continue
+
+            r, c = piece.position
+
+            # Two possible en passant capture destinations (left and right)
+            targets = [
+                (r + 2 * aux, c - 1, r, c - 1),
+                (r + 2 * aux, c + 1, r, c + 1),
+            ]
+
+            for t_r2, t_c2, t_r1, t_c1 in targets:
+                # Must match last move's coordinates
+                if lastMove.coords != (t_r2, t_c2, t_r1, t_c1):
+                    continue
+
+                target_piece = self.board[r][t_c1]
+
+                # Must be an enemy pawn in the adjacent file
+                if not target_piece or target_piece.type != PieceType.PAWN:
+                    continue
+
+                # Construct the en passant capture move
+                cap_move = Move((r, c, r + aux, t_c1), MoveType.ENPASSANT)
+
+                # Temporarily apply the move to check legality
+                pawn_captured = self._apply_move(cap_move)
+
+                if not self._is_checked(turn):
+                    valid_moves.append(cap_move)
+
+                # Undo the temporary move
+                self._undo_move(cap_move, pawn_captured)
+
+        """
+        """
 
         return valid_moves                
 
-    def _apply_move(self, move: tuple[int,int,int,int]) -> None | Piece:
+    def _undo_move(self, move: Move, piece_captured: Piece | None = None, piece_old_state: PieceState | None = None) -> None:
         """
-        Changes piece positions in order to apply the move
+        Undo a given chess move.
+        piece_old_state is the state of the piece who moved before the move was performed, that's important
+        when we're undoing the first move the piece made in the match.
         """
-        (x,y,x2,y2) = move
+        (x,y,x2,y2) = move.coords
 
-        # code to performe a regular move or a capture move
-        piece = self.board[x][y]
-        piece.update_position((x2,y2))
+        # put the piece back on the origin square and updates its position
+        self.board[x][y] = self.board[x2][y2]
+        self.board[x][y].position = (x,y)
         
-        captured_piece = self.board[x2][y2] 
+        if(move.type == MoveType.NORMAL or move.type == MoveType.CAPTURE):
+            self.board[x][y].state = piece_old_state
 
-        # putting the piece in the destination square
-        self.board[x2][y2] = piece 
+            # putting the captured piece back in the board
+            self.board[x2][y2] = piece_captured
 
-        # emptying the square the piece was
+        elif(move.type == MoveType.ENPASSANT):
+            # putting the captured pawn back to the left or right square
+            self.board[x][y2] = piece_captured
+
+            # emptying the destination square
+            self.board[x2][y2] = None
+
+    def _apply_move(self, move: Move) -> None | Piece:
+        """
+        Changes piece positions in order to apply the move.
+        Returns a Piece object if the move is a capture or None if it's a normal move.
+        """
+        (x,y,x2,y2) = move.coords
+
+        piece = self.board[x][y]
+                
+        # emptying the square where the piece was
         self.board[x][y] = None
+        
+        if(move.type == MoveType.NORMAL or move.type == MoveType.CAPTURE):
+            captured_piece = self.board[x2][y2] 
 
-        # code to performe enPassant capture
-        # ...
+        elif(move.type == MoveType.ENPASSANT):
+            # in a enpassant capture the captured piece is on the left or right side of the moving piece
+            captured_piece = self.board[x][y2]
+            self.board[x][y2] = None
 
-        # code to performe castle move
-        # ...
-
-        # updates king position if necessary
-        if piece.type == PieceType.KING:
-            if(piece.color == PieceColor.BLACK):
-                self.blackKing = (x2,y2)
-            else:
-                self.whiteKing = (x2,y2)
-
+        # putting the moving piece in the destination square
+        self.board[x2][y2] = piece 
+        self.board[x2][y2].position = (x2,y2)
         self.board[x2][y2].state = PieceState.MOVED
 
         return captured_piece

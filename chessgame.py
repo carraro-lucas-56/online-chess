@@ -33,22 +33,23 @@ class ChessGame():
             y2 = int(input())
 
             # asks for another move ultil we get a valid one
-            while (x,y,x2,y2) not in self.validMoves:            
+            while not any((x,y,x2,y2) == move.coords for move in self.validMoves):            
                 x = int(input())
                 y = int(input())
                 x2 = int(input())
                 y2 = int(input())
 
+            move = [m for m in self.validMoves if m.coords == (x,y,x2,y2)]
+
             # apply the move and checks if the game ended
-            self.board._apply_move((x,y,x2,y2))
+            self.board._apply_move(move[0])
             self._change_turn()
-            self.validMoves = self.board.gen_valid_moves(self.turn)
+            self.validMoves = self.board.gen_valid_moves(self.turn,move[0])
 
             if self._game_ended():
-                self.inProgess = False
+                self.inProgress = False
 
             print(self.turn.name)
 
 game = ChessGame()
 game.play()
-

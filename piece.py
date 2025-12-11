@@ -1,5 +1,6 @@
 from enum import Enum
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 class PieceColor(Enum):
     WHITE = 1
@@ -17,6 +18,17 @@ class PieceState(Enum):
     MOVED = 1
     NOT_MOVED = 2
 
+class MoveType(Enum):
+    NORMAL = 1
+    CAPTURE = 2
+    ENPASSANT = 3
+    CASTLE = 4
+
+@dataclass
+class Move:
+    coords: tuple[int,int,int,int]
+    type: MoveType
+
 class Piece(ABC):
     def __init__(self,
                  color: PieceColor,
@@ -24,8 +36,8 @@ class Piece(ABC):
                  position: tuple[int,int]):
         self.__color = color
         self.__type = type
-        self.__state = PieceState.NOT_MOVED
         self.__value = self._piece_value(type)
+        self.state = PieceState.NOT_MOVED
         self.position = position
 
     @property
@@ -40,35 +52,26 @@ class Piece(ABC):
     def type(self):
         return self.__type
 
-    @property 
-    def state(self):
-        return self.__state
-
-    @state.setter
-    def state(self,new_state):
-        # this conditon prevents setting a moved piece to not moved state
-        if(self.state != PieceState.MOVED):
-            self.__state = new_state
-
     def update_position(self, new_position: tuple[int,int]) -> None:
         self.position = new_position
 
-    @classmethod
-    def _in_bound(self, x: int, y: int) -> bool:
+    @staticmethod
+    def _in_bound(x: int, y: int) -> bool:
         """
         helper function to check if a coordinate in valid
         """
         return x >= 0 and y >= 0 and x <= 7 and y <= 7
 
     @abstractmethod
-    def get_moves(self, board) -> list[tuple[int,int,int,int]]:
+    def get_moves(self, board) -> list[Move]:
         """
         Return all spatially possible moves for the piece in the given board.
+        Do not include en passant captures and castling.
         Those moves ARE NOT necessarily valid.
         Move validations are done in a different section of the code.
         """
 
-    def _explore_directions(self, board, dirs: list[tuple[int,int]]) -> list[tuple[int,int,int,int]]:
+    def _explore_directions(self, board, dirs: list[tuple[int,int]]) -> list[Move]:
         """
         This function 'walks' in the board with the piece in the given directions 
         and returns all the available moves it found.
@@ -99,7 +102,7 @@ class Piece(ABC):
 
             # if the square is empty, keep exploring this diagonal
             elif(board[r+x][c+y] is None):
-                moves.append((r,c,r+x,c+y))
+                moves.append(Move((r,c,r+x,c+y),MoveType.NORMAL))
                 x += dr
                 y += dc
 
@@ -107,7 +110,7 @@ class Piece(ABC):
             else:
                 # if it's an opposing piece add the capture move
                 if board[r+x][c+y].color != self.color:
-                    moves.append((r,c,r+x,c+y)) 
+                    moves.append(Move((r,c,r+x,c+y),MoveType.CAPTURE)) 
 
                 # change the diagonal we're exploring
                 index += 1
@@ -117,7 +120,7 @@ class Piece(ABC):
         return moves
 
     @classmethod
-    def _piece_value(piece: PieceType) -> int:
+    def _piece_value(cls,piece: PieceType) -> int:
         piece_value_dict = {
             "PAWN" : 1,
             "KNIGHT" : 3,
@@ -134,7 +137,7 @@ class Pawn(Piece):
                          PieceType.PAWN,
                          position)
 
-    def get_moves(self, board) -> list[tuple[int,int,int,int]]:
+    def get_moves(self, board) -> list[Move]:
         moves = []
 
         # aux helps with board orientation
@@ -144,19 +147,19 @@ class Pawn(Piece):
 
         # checks the condtions to make a capture in the left up square
         if self._in_bound(r+aux,c-1) and board[r+aux][c-1] and board[r+aux][c-1].color != self.color:
-            moves.append((r,c,r+aux,c-1))
+            moves.append(Move((r,c,r+aux,c-1,),MoveType.CAPTURE))
 
         # checks the condtions to make a capture in the right up square
         if self._in_bound(r+aux,c+1) and board[r+aux][c+1] and board[r+aux][c+1].color != self.color:
-            moves.append((r,c,r+aux,c+1))
+            moves.append(Move((r,c,r+aux,c+1),MoveType.CAPTURE))
 
         # checks if we can go one square up
         if self._in_bound(r+aux,c) and board[r+aux][c] is None:
-            moves.append((r,c,r+aux,c))
+            moves.append(Move((r,c,r+aux,c),MoveType.NORMAL))
 
             # checks if we can go two squares up
             if self._in_bound(r+2*aux,c) and self.state == PieceState.NOT_MOVED and board[r+2*aux][c] is None:
-                moves.append((r,c,r+2*aux,c))
+                moves.append(Move((r,c,r+2*aux,c),MoveType.NORMAL))
 
         return moves    
         
@@ -179,9 +182,14 @@ class Knight(Piece):
         ]
         
         for (x,y) in coords:
-            # checks if the destination squal is empty or has an opposing piece
-            if self._in_bound(x,y) and (board[x][y] is None or board[x][y].color != self.color):
-                moves.append((r,c,x,y))
+            if not self._in_bound(x,y):
+                continue 
+
+            # checks if the destination square is empty or has an opposing piece
+            if(board[x][y] is None):
+                moves.append(Move((r,c,x,y),MoveType.NORMAL))
+            elif( board[x][y].color != self.color):
+                moves.append(Move((r,c,x,y),MoveType.CAPTURE))
 
         return moves
 
@@ -228,8 +236,14 @@ class King(Piece):
         (r,c) = self.position
 
         for (dr,dc) in all_dirs:
-            if(self._in_bound(r+dr,c+dc) and (board[r+dr][c+dc] is None or board[r+dr][c+dc].color != self.color)):
-                moves.append((r,c,r+dr,c+dc))
+            if(not self._in_bound(r+dr,c+dc)):
+                continue 
+        
+            # checks if the destination square is empty or has an opposing piece
+            if board[r+dr][c+dc] is None:
+                moves.append(Move((r,c,r+dr,c+dc),MoveType.NORMAL))
+            elif( board[r+dr][c+dc].color != self.color):
+                moves.append(Move((r,c,r+dr,c+dc),MoveType.CAPTURE))
 
         return moves
     

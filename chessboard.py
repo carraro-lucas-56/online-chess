@@ -2,16 +2,9 @@ from piece import *
 import numpy as np
 
 class ChessBoard():
-    def __init__(self):
-        self.__back_rank_layout = [PieceType.ROOK, 
-                                   PieceType.KNIGHT,
-                                   PieceType.BISHOP,
-                                   PieceType.QUEEN,
-                                   PieceType.KING,
-                                   PieceType.BISHOP,
-                                   PieceType.KNIGHT,
-                                   PieceType.ROOK]
-        self.board = self._initial_position()  
+    def __init__(self,customBoard: np.ndarray | None = None):
+        self.__back_rank_layout = ['R','N','B','Q','K','B','N','R']
+        self.board = customBoard if not customBoard is None else self._initial_position()  
 
     @property
     def back_rank_layout(self):
@@ -34,21 +27,20 @@ class ChessBoard():
         return board
 
 
-    def _create_piece(self, color: PieceColor, piece_type: PieceType, row: int, col: int):
+    def _create_piece(self, color: PieceColor, piece_type: str, row: int, col: int):
         """
         Helper function to create the correct piece based on type.
         """
-        if piece_type == PieceType.PAWN:
-            return Pawn(color, (row, col))
-        elif piece_type == PieceType.KNIGHT:
+
+        if piece_type == 'N':
             return Knight(color, (row, col))
-        elif piece_type == PieceType.BISHOP:
+        elif piece_type == 'B':
             return Bishop(color, (row, col))
-        elif piece_type == PieceType.ROOK:
+        elif piece_type == 'R':
             return Rook(color, (row, col))
-        elif piece_type == PieceType.QUEEN:
+        elif piece_type == 'Q':
             return Queen(color, (row, col))
-        elif piece_type == PieceType.KING:
+        elif piece_type == 'K':
             return King(color, (row, col))
         else:
             raise ValueError(f"Invalid piece type: {piece_type}")
@@ -64,7 +56,7 @@ class ChessBoard():
             
             # Check for moves that attack the king  
             if [move for move in piece.get_moves(self.board) 
-                if self.board[move.coords[2]][move.coords[3]] and self.board[move.coords[2]][move.coords[3]].type == PieceType.KING]:
+                if self.board[move.coords[2]][move.coords[3]] and type(self.board[move.coords[2]][move.coords[3]]) == King]:
                 return True
         
         return False
@@ -109,7 +101,7 @@ class ChessBoard():
 
         for piece in self.board[row]:
             # Only consider pawns
-            if not piece or piece.type != PieceType.PAWN:
+            if not piece or type(piece) != Pawn:
                 continue
 
             r, c = piece.position
@@ -128,7 +120,7 @@ class ChessBoard():
                 target_piece = self.board[r][t_c1]
 
                 # Must be an enemy pawn in the adjacent file
-                if not target_piece or target_piece.type != PieceType.PAWN:
+                if not target_piece or type(target_piece) != Pawn:
                     continue
 
                 # Construct the en passant capture move
@@ -151,7 +143,7 @@ class ChessBoard():
         row = 0 if turn == PieceColor.BLACK else 7
 
         # King needs to be is in the right spot and must have not moved yet
-        if not self.board[row][4] or self.board[row][4].type != PieceType.KING or self.board[row][4].state == PieceState.MOVED:
+        if not self.board[row][4] or type(self.board[row][4]) != King or self.board[row][4].state == PieceState.MOVED:
             return valid_moves 
 
         # Getting the coords from the squares in the desired row that are being attacked by the opponent 
@@ -159,11 +151,14 @@ class ChessBoard():
         for piece in self.board.flat:
             if not piece or piece.color == turn:
                 continue
-            attacked_squares.extend([(move.coords[2],move.coords[3]) for move in piece.get_moves(self.board) if move.coords[2] == row])
+            elif type(piece) == Pawn:
+                attacked_squares.extend(piece.attacked_squares())
+            else:
+                attacked_squares.extend([(move.coords[2],move.coords[3]) for move in piece.get_moves(self.board) if move.coords[2] == row])
 
         for (col,aux) in [(0,-1),(7,1)]:
             # Rook needs to be in the right sopt and must have not moved yet
-            if not self.board[row][col] or self.board[row][col].type != PieceType.ROOK or self.board[row][col].state == PieceState.MOVED:
+            if not self.board[row][col] or type(self.board[row][col]) != Rook or self.board[row][col].state == PieceState.MOVED:
                 continue    
             
             # The path between the king and the rook must be empty
@@ -254,12 +249,12 @@ class ChessBoard():
         """
         # Mapping piece types to letters
         piece_symbols = {
-            PieceType.KING:   "K",
-            PieceType.QUEEN:  "Q",
-            PieceType.ROOK:   "R",
-            PieceType.BISHOP: "B",
-            PieceType.KNIGHT: "N",
-            PieceType.PAWN:   "P"
+            King:   "K",
+            Queen:  "Q",
+            Rook:   "R",
+            Bishop: "B",
+            Knight: "N",
+            Pawn:   "P"
         }
 
         print("    a   b   c   d   e   f   g   h")
@@ -274,7 +269,7 @@ class ChessBoard():
                 if piece is None:
                     row_str += "   |"
                 else:
-                    symbol = piece_symbols[piece.type]
+                    symbol = piece_symbols[type(piece)]
                     # White uppercase, black lowercase
                     if piece.color == PieceColor.WHITE:
                         row_str += f" {symbol} |"

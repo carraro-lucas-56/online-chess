@@ -6,14 +6,6 @@ class PieceColor(Enum):
     WHITE = 1
     BLACK = 2
 
-class PieceType(Enum):
-    PAWN = 1
-    KNIGHT = 2
-    BISHOP = 3
-    ROOK = 4
-    QUEEN = 5
-    KING = 6
-
 class PieceState(Enum):
     MOVED = 1
     NOT_MOVED = 2
@@ -32,11 +24,10 @@ class Move:
 class Piece(ABC):
     def __init__(self,
                  color: PieceColor,
-                 type: PieceType,
+                 piece_type: str,
                  position: tuple[int,int]):
         self.__color = color
-        self.__type = type
-        self.__value = self._piece_value(type)
+        self.__value = self._piece_value(piece_type)
         self.state = PieceState.NOT_MOVED
         self.position = position
 
@@ -47,10 +38,6 @@ class Piece(ABC):
     @property
     def value(self):
         return self.__value
-
-    @property
-    def type(self):
-        return self.__type
 
     def update_position(self, new_position: tuple[int,int]) -> None:
         self.position = new_position
@@ -109,7 +96,7 @@ class Piece(ABC):
             # stop, we found another piece 
             else:
                 # if it's an opposing piece add the capture move
-                if board[r+x][c+y].color != self.color:
+                if board[r+x][c+y].color != self.color and type(board[r+x][c+y] != King):
                     moves.append(Move((r,c,r+x,c+y),MoveType.CAPTURE)) 
 
                 # change the diagonal we're exploring
@@ -120,22 +107,32 @@ class Piece(ABC):
         return moves
 
     @classmethod
-    def _piece_value(cls,piece: PieceType) -> int:
+    def _piece_value(cls,piece_type: str) -> int:
         piece_value_dict = {
-            "PAWN" : 1,
-            "KNIGHT" : 3,
-            "BISHOP" : 3,
-            "ROOK" : 5,
-            "QUEEN" : 10,
-            "KING" : 1000
+            "P" : 1,
+            "N" : 3,
+            "B" : 3,
+            "R" : 5,
+            "Q" : 10,
+            "K" : 1000
         }
-        return piece_value_dict[piece.name]
+        return piece_value_dict[piece_type]
     
 class Pawn(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         PieceType.PAWN,
+                         "P",
                          position)
+        self.initial_row = 6 if self.color == PieceColor.WHITE else 1
+        
+    def attacked_squares(self) -> list[tuple[int,int]]:
+        """
+        Returns the coordinates of all the coords that the pawn is attacking
+        """
+        aux = 1 if self.color == PieceColor.BLACK else -1
+        (r,c) = self.position
+
+        return [(x,y) for (x,y) in [(r+aux,c-1),(r+aux,c+1)] if self._in_bound(x,y)]
 
     def get_moves(self, board) -> list[Move]:
         moves = []
@@ -146,11 +143,11 @@ class Pawn(Piece):
         (r,c) = self.position
 
         # checks the condtions to make a capture in the left up square
-        if self._in_bound(r+aux,c-1) and board[r+aux][c-1] and board[r+aux][c-1].color != self.color:
+        if (self._in_bound(r+aux,c-1) and board[r+aux][c-1] and board[r+aux][c-1].color != self.color):
             moves.append(Move((r,c,r+aux,c-1,),MoveType.CAPTURE))
 
         # checks the condtions to make a capture in the right up square
-        if self._in_bound(r+aux,c+1) and board[r+aux][c+1] and board[r+aux][c+1].color != self.color:
+        if (self._in_bound(r+aux,c+1) and board[r+aux][c+1] and board[r+aux][c+1].color != self.color):
             moves.append(Move((r,c,r+aux,c+1),MoveType.CAPTURE))
 
         # checks if we can go one square up
@@ -158,7 +155,7 @@ class Pawn(Piece):
             moves.append(Move((r,c,r+aux,c),MoveType.NORMAL))
 
             # checks if we can go two squares up
-            if self._in_bound(r+2*aux,c) and self.state == PieceState.NOT_MOVED and board[r+2*aux][c] is None:
+            if self._in_bound(r+2*aux,c) and r == self.initial_row and board[r+2*aux][c] is None:
                 moves.append(Move((r,c,r+2*aux,c),MoveType.NORMAL))
 
         return moves    
@@ -166,7 +163,7 @@ class Pawn(Piece):
 class Knight(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         PieceType.KNIGHT,
+                         "N",
                          position)
 
     def get_moves(self, board):
@@ -196,7 +193,7 @@ class Knight(Piece):
 class Bishop(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         PieceType.BISHOP,
+                         "B",
                          position)
 
     def get_moves(self, board):
@@ -206,7 +203,7 @@ class Bishop(Piece):
 class Rook(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         PieceType.ROOK,
+                         "R",
                          position)
 
     def get_moves(self, board):
@@ -217,7 +214,7 @@ class Rook(Piece):
 class Queen(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         PieceType.QUEEN,
+                         "Q",
                          position)
 
     def get_moves(self, board):
@@ -227,7 +224,7 @@ class Queen(Piece):
 class King(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         PieceType.KING,
+                         "K",
                          position)
         
     def get_moves(self, board):

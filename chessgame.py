@@ -32,19 +32,26 @@ class ChessGame():
             x2 = int(input())
             y2 = int(input())
 
-            # asks for another move ultil we get a valid one
+            # Asks for another move ultil we get a valid one
             while not any((x,y,x2,y2) == move.coords for move in self.validMoves):            
                 x = int(input())
                 y = int(input())
                 x2 = int(input())
                 y2 = int(input())
 
-            move = [m for m in self.validMoves if m.coords == (x,y,x2,y2)]
+            moves = [m for m in self.validMoves if m.coords == (x,y,x2,y2)]
+            
+            # Checking for promotions
+            if(len(moves) > 1):
+                prom_piece = input()
+                move = next(m for m in moves if m.promotion.value == prom_piece)
+            else:
+                move = moves[0]
 
             # apply the move and checks if the game ended
-            self.board._apply_move(move[0])
+            self.board._apply_move(move)
             self._change_turn()
-            self.validMoves = self.board.gen_valid_moves(self.turn,move[0])
+            self.validMoves = self.board.gen_valid_moves(self.turn,move)
 
             if self._game_ended():
                 self.inProgress = False

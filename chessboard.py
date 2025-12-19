@@ -26,8 +26,7 @@ class ChessBoard():
         
         return board
 
-
-    def _create_piece(self, color: PieceColor, piece_type: str, row: int, col: int):
+    def _create_piece(self, color: PieceColor, piece_type: str, row: int, col: int) -> Piece:
         """
         Helper function to create the correct piece based on type.
         """
@@ -42,6 +41,8 @@ class ChessBoard():
             return Queen(color, (row, col))
         elif piece_type == 'K':
             return King(color, (row, col))
+        elif piece_type == 'P':
+            return Pawn(color, (row, col))
         else:
             raise ValueError(f"Invalid piece type: {piece_type}")
 
@@ -95,7 +96,7 @@ class ChessBoard():
         checking for available en passant captures
         """
 
-        # Row where a pawn must be to perform en passant
+        # Row where a pawn must be to perform en passant capture
         # Aux tells which direction that pawn moves
         row, aux = (4, 1) if turn == PieceColor.BLACK else (3, -1)
 
@@ -135,6 +136,7 @@ class ChessBoard():
                 # Undo the temporary move
                 self._undo_move(cap_move, pawn_captured)
 
+
         """
         Checking for available castling moves
         """
@@ -143,7 +145,9 @@ class ChessBoard():
         row = 0 if turn == PieceColor.BLACK else 7
 
         # King needs to be is in the right spot and must have not moved yet
-        if not self.board[row][4] or type(self.board[row][4]) != King or self.board[row][4].state == PieceState.MOVED:
+        if (not self.board[row][4] 
+            or type(self.board[row][4]) != King 
+            or self.board[row][4].state == PieceState.MOVED):
             return valid_moves 
 
         # Getting the coords from the squares in the desired row that are being attacked by the opponent 
@@ -154,15 +158,22 @@ class ChessBoard():
             elif type(piece) == Pawn:
                 attacked_squares.extend(piece.attacked_squares())
             else:
-                attacked_squares.extend([(move.coords[2],move.coords[3]) for move in piece.get_moves(self.board) if move.coords[2] == row])
+                attacked_squares.extend([
+                    (move.coords[2],move.coords[3]) 
+                    for move in piece.get_moves(self.board) 
+                    if move.coords[2] == row])
 
         for (col,aux) in [(0,-1),(7,1)]:
             # Rook needs to be in the right sopt and must have not moved yet
-            if not self.board[row][col] or type(self.board[row][col]) != Rook or self.board[row][col].state == PieceState.MOVED:
+            if (not self.board[row][col] 
+                or type(self.board[row][col]) != Rook 
+                or self.board[row][col].state == PieceState.MOVED):
                 continue    
             
             # The path between the king and the rook must be empty
-            if self.board[row][4+aux] or self.board[row][4+2*aux] or (col == 0 and self.board[row][4+3*aux]):
+            if (self.board[row][4+aux] 
+                or self.board[row][4+2*aux] 
+                or (col == 0 and self.board[row][4+3*aux])): # The path is longer for long castling
                 continue
             
             squares_to_check = [
@@ -186,23 +197,25 @@ class ChessBoard():
         when we're undoing the first move the piece made in the match.
         """
         (x,y,x2,y2) = move.coords
-
-        # Put the piece back on the origin square and updates its position
-        self.board[x][y] = self.board[x2][y2]
-        self.board[x][y].position = (x,y)
         
-        if(move.type == MoveType.NORMAL or move.type == MoveType.CAPTURE):
-            self.board[x][y].state = piece_old_state
+        # Put the piece back on the origin square and updates its position
+        if(move.type == MoveType.PROMOTION_CAPTURE or move.type == MoveType.PROMOTION_NORMAL):
+            self.board[x][y] = self._create_piece(self.board[x2][y2].color,"P",x,y)
+        else:
+            self.board[x][y] = self.board[x2][y2]
+            self.board[x][y].position = (x,y)
 
-            # Putting the captured piece back in the board
-            self.board[x2][y2] = piece_captured
-
-        elif(move.type == MoveType.ENPASSANT):
+        if(move.type == MoveType.ENPASSANT):
             # Putting the captured pawn back to the left or right square
             self.board[x][y2] = piece_captured
 
             # Emptying the destination square
             self.board[x2][y2] = None
+        else:
+            self.board[x][y].state = piece_old_state
+
+            # Putting the captured piece back in the board
+            self.board[x2][y2] = piece_captured
 
     def _apply_move(self, move: Move) -> None | Piece:
         """
@@ -212,11 +225,15 @@ class ChessBoard():
         (x,y,x2,y2) = move.coords
         captured_piece = None
         piece = self.board[x][y]
-                
+
+        # Promoting the pawn into another piece
+        if move.type == MoveType.PROMOTION_NORMAL or move.type == MoveType.PROMOTION_CAPTURE:
+            piece = self._create_piece(piece.color,move.promotion.value,x2,y2)
+
         # Emptying the square where the piece was
         self.board[x][y] = None
 
-        if(move.type == MoveType.CAPTURE):
+        if(move.type == MoveType.CAPTURE or move.type == MoveType.PROMOTION_CAPTURE):
             captured_piece = self.board[x2][y2] 
 
         elif(move.type == MoveType.ENPASSANT):

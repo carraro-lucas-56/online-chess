@@ -1,36 +1,21 @@
-from chessboard import *
-import json
-import os
+from src.chessgame import *
 from dotenv import load_dotenv
-
-"""
-This script is a test harness for validating chess move generation and
-algebraic notation formatting against predefined test cases.
-
-How the tests work:
-1. Each test case provides a starting position encoded as a FEN string
-   and a list of expected legal moves written in standard algebraic notation.
-2. The FEN string is parsed into an internal ChessBoard representation,
-   including piece placement, side to move, castling rights, and en passant.
-3. All legal moves for the active player are generated from the board state.
-4. Each generated Move object is converted into algebraic notation using
-   moveObj_to_moveName, following standard chess notation rules.
-5. Check ('+') and checkmate ('#') symbols are ignored when comparing results,
-   since the focus is on move identity rather than check indication.
-6. The set of generated move names is compared against the expected set.
-   - If they match exactly, the test passes.
-   - Otherwise, the board position, expected moves, and actual moves are printed
-     to help diagnose the failure.
-
-The goal of these tests is to ensure that move generation and move notation
-are both correct and consistent with official chess rules.
-"""
-
+import os 
 
 load_dotenv()
 ROOT_DIR = os.getenv("ROOT_DIR")
 
 letters = ['a','b','c','d','e','f','g','h']
+
+piece_symbols = {
+    PieceType.PAWN: "P",
+    PieceType.KNIGHT: "N",
+    PieceType.LIGHT_BISHOP: "B",
+    PieceType.DARK_BISHOP: "B",
+    PieceType.ROOK: "R",
+    PieceType.QUEEN: "Q",
+    PieceType.KING: "K"
+}
 
 def numCoord_to_chessCoord(x: int, y: int) -> str:
     return letters[y] + str(abs(x-8))
@@ -42,56 +27,47 @@ def moveObj_to_moveName(move: Move, all_moves: list[Move], board: np.ndarray) ->
     """
     (x,y,x2,y2) = move.coords
     piece = board[x][y]
-
-    dict_piece = {
-            Pawn: 'P',
-            Rook: 'R',
-            Knight: 'N',
-            Bishop: 'B',
-            Queen: 'Q',
-            King: 'K'
-        }
     
     if(move.type == MoveType.CASTLE):
         return "O-O" if y-y2 < 0 else "O-O-O"
 
-    if type(piece) == Pawn:
+    if piece.type == PieceType.PAWN:
         name = (("" if(move.type == MoveType.NORMAL or move.type == MoveType.PROMOTION_NORMAL) 
-                         else letters[y] + 'x') 
+                    else letters[y] + 'x') 
                     + numCoord_to_chessCoord(x2,y2))
         if(move.type == MoveType.PROMOTION_CAPTURE or move.type == MoveType.PROMOTION_NORMAL):
-            name = name + f'={move.promotion.value}'
+            name = name + f'={piece_symbols[move.promotion]}'
         return name
 
     ls = [m.coords[:2] for m in all_moves 
-            if (type(board[m.coords[0]][m.coords[1]]) == type(piece)
-                 and (x,y) != m.coords[:2] 
-                 and (x2,y2) == m.coords[2:])]
+            if board[m.coords[0]][m.coords[1]].type == piece.type  
+               and (x,y) != m.coords[:2]  
+               and (x2,y2) == m.coords[2:]]
 
     # Special case that can lead into ambiguous move names: Multiple pieces of the same type that can legally move to the same square
     if ls:
         # Case when we need to specify the current SQUARE of the piece to remove ambiguity
         if (next(((r,c) for (r,c) in ls if r == x),None) and 
             next(((r,c) for (r,c) in ls if c == y),None)):
-            return (dict_piece[type(piece)] 
+            return (piece_symbols[piece.type] 
                     + numCoord_to_chessCoord(x,y) 
                     + ("" if move.type == MoveType.NORMAL else "x") 
                     + numCoord_to_chessCoord(x2,y2))
 
         # Case when we need to specify the current ROW of the piece to remove ambiguity
         if next(((r,c) for (r,c) in ls if y == c),None):
-            return (dict_piece[type(piece)] 
+            return (piece_symbols[piece.type] 
                     + str(abs(x-8))  
                     + ("" if move.type == MoveType.NORMAL else "x") 
                     + numCoord_to_chessCoord(x2,y2))
 
         # Case when we need to specify the current COLUMN of the piece to remove ambiguity
-        return (dict_piece[type(piece)] 
+        return (piece_symbols[piece.type] 
                 + letters[y]
                 + ("" if move.type == MoveType.NORMAL else "x") 
                 + numCoord_to_chessCoord(x2,y2))
 
-    return dict_piece[type(piece)] + ("" if move.type == MoveType.NORMAL else "x") + numCoord_to_chessCoord(x2,y2)
+    return piece_symbols[piece.type] + ("" if move.type == MoveType.NORMAL else "x") + numCoord_to_chessCoord(x2,y2)
 
 def fen_to_chessboard(fen: str) -> tuple[ChessBoard,list[Move]]:
     """
@@ -165,36 +141,3 @@ def fen_to_chessboard(fen: str) -> tuple[ChessBoard,list[Move]]:
     board = ChessBoard(np_board)
 
     return board, board.gen_valid_moves(turn,lastMove)
-
-def run_testcase(file_path):
-
-    with open(file_path,'r') as file:
-        data_dict = json.load(file)
-
-    for i, test in enumerate(data_dict["testCases"]):
-        fen = test["start"]["fen"]
-        board, move_objs = fen_to_chessboard(fen)
-
-        # Moves that deliveries a check (i.e moves that end wiht '+' ) have the '+' character removed
-        expected = [item["move"] if (item["move"][-1] != '+' and item["move"][-1] != '#') else item["move"][:-1] for item in test["expected"]]
-
-        actual = [moveObj_to_moveName(move,move_objs,board.board) for move in move_objs]
-
-        if set(actual) == set(expected):
-            print(f"test {i+1} passed")
-        else:
-            print(f"test {i} failed ")
-            print(fen)
-            board.print_board()
-            print(expected)
-            print(actual)
-            print()
-
-testcases = ['famous','pawns','stalemates','standard','taxing','checkmates','promotions','castling']
-
-for i, test in enumerate(testcases):
-    print(50*'-')
-    print(f'Testcase {i+1} -> {test}.json')
-    print(50*'-')
-    run_testcase(f'{ROOT_DIR}/testcases/{test}.json')
-    

@@ -20,10 +20,13 @@ class MoveType(Enum):
     PROMOTION_CAPTURE = 6
 
 class PieceType(Enum):
-    QUEEN = "Q"
-    ROOK = "R"
-    BISHOP = "B"
+    PAWN = "P"
     KNIGHT = "N"
+    LIGHT_BISHOP = "LB"
+    DARK_BISHOP = "DB"
+    ROOK = "R"
+    QUEEN = "Q"
+    KING = "K"
 
 @dataclass
 class Move:
@@ -31,13 +34,17 @@ class Move:
     type: MoveType
     promotion: Optional[PieceType] = None
 
+def is_light_square(t: tuple[int,int]) -> bool:
+    return (t[0]+t[1]) % 2 == 0
+
 class Piece(ABC):
     def __init__(self,
                  color: PieceColor,
-                 piece_type: str,
+                 p_type: PieceType,
                  position: tuple[int,int]):
         self.__color = color
-        self.__value = self._piece_value(piece_type)
+        self.__type = p_type
+        self.__value = self.piece_value(p_type)
         self.state = PieceState.NOT_MOVED
         self.position = position
 
@@ -48,6 +55,10 @@ class Piece(ABC):
     @property
     def value(self):
         return self.__value
+
+    @property
+    def type(self):
+        return self.__type
 
     def update_position(self, new_position: tuple[int,int]) -> None:
         self.position = new_position
@@ -106,7 +117,7 @@ class Piece(ABC):
             # stop, we found another piece 
             else:
                 # if it's an opposing piece add the capture move
-                if board[r+x][c+y].color != self.color and type(board[r+x][c+y] != King):
+                if board[r+x][c+y].color != self.color: # and type(board[r+x][c+y] != King):
                     moves.append(Move((r,c,r+x,c+y),MoveType.CAPTURE)) 
 
                 # change the diagonal we're exploring
@@ -117,21 +128,22 @@ class Piece(ABC):
         return moves
 
     @classmethod
-    def _piece_value(cls,piece_type: str) -> int:
+    def piece_value(cls,piece_type: PieceType) -> int:
         piece_value_dict = {
-            "P" : 1,
-            "N" : 3,
-            "B" : 3,
-            "R" : 5,
-            "Q" : 10,
-            "K" : 1000
+            PieceType.PAWN   : 1,
+            PieceType.KNIGHT : 3,
+            PieceType.LIGHT_BISHOP : 3,
+            PieceType.DARK_BISHOP : 3,
+            PieceType.ROOK   : 5,
+            PieceType.QUEEN  : 10,
+            PieceType.KING   : 1000
         }
         return piece_value_dict[piece_type]
     
 class Pawn(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         "P",
+                         PieceType.PAWN,
                          position)
         self.inital_row = 6 if self.color == PieceColor.WHITE else 1
 
@@ -144,9 +156,19 @@ class Pawn(Piece):
 
         return [(x,y) for (x,y) in [(r+aux,c-1),(r+aux,c+1)] if self._in_bound(x,y)]
 
+    @classmethod
+    def prom_pieces(cls,t: tuple[int,int]) -> list[PieceType]:
+      """
+      Receives a coord and returns the pieces to witch a pawn in this given coord can be promoted to.
+      """  
+      return [PieceType.QUEEN,
+              PieceType.KNIGHT, 
+              PieceType.LIGHT_BISHOP if is_light_square(t) else PieceType.DARK_BISHOP,
+              PieceType.ROOK]
+
     def get_promotion_moves(self,board) -> list[Move]:
         """
-        Generate promotions moves
+        Generate promotions moves.
         """
         moves = []
         (r,c) = self.position
@@ -159,19 +181,19 @@ class Pawn(Piece):
             and board[r+aux][c-1] 
             and board[r+aux][c-1].color != self.color):
             moves.extend([Move((r,c,r+aux,c-1,),MoveType.PROMOTION_CAPTURE,p_type) 
-                          for p_type in PieceType])
+                          for p_type in self.prom_pieces((r+aux,c-1))])
 
         # Checks the condtions to promote with a capture in the right up square
         if (self._in_bound(r+aux,c+1) 
             and board[r+aux][c+1] 
             and board[r+aux][c+1].color != self.color):
             moves.extend([Move((r,c,r+aux,c+1,),MoveType.PROMOTION_CAPTURE,p_type) 
-                          for p_type in PieceType])
+                          for p_type in self.prom_pieces((r+aux,c+1))])
 
         # Checks if we can go one square up
         if self._in_bound(r+aux,c) and board[r+aux][c] is None:
             moves.extend([Move((r,c,r+aux,c,),MoveType.PROMOTION_NORMAL,p_type) 
-                          for p_type in PieceType])
+                          for p_type in self.prom_pieces((r+aux,c))])
             
         return moves
 
@@ -212,7 +234,7 @@ class Pawn(Piece):
 class Knight(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         "N",
+                         PieceType.KNIGHT,
                          position)
 
     def get_moves(self, board):
@@ -242,7 +264,9 @@ class Knight(Piece):
 class Bishop(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         "B",
+                         (PieceType.LIGHT_BISHOP 
+                          if is_light_square(position) 
+                          else PieceType.DARK_BISHOP),
                          position)
 
     def get_moves(self, board):
@@ -252,7 +276,7 @@ class Bishop(Piece):
 class Rook(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         "R",
+                         PieceType.ROOK,
                          position)
 
     def get_moves(self, board):
@@ -263,7 +287,7 @@ class Rook(Piece):
 class Queen(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         "Q",
+                         PieceType.QUEEN,
                          position)
 
     def get_moves(self, board):
@@ -273,7 +297,7 @@ class Queen(Piece):
 class King(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
-                         "K",
+                         PieceType.KING,
                          position)
         
     def get_moves(self, board):

@@ -15,7 +15,6 @@ class ChessBoard():
     def black_back_rank_layout(self):
         return self.__black_back_rank_layout
 
-
     def _initial_position(self):
         # Create an empty 8x8 board using numpy
         board = np.full((8, 8), None, dtype=object)  # Initially set all positions to None
@@ -103,46 +102,39 @@ class ChessBoard():
         checking for available en passant captures
         """
 
-        # Row where a pawn must be to perform en passant capture
-        # Aux tells which direction that pawn moves
-        row, aux = (4, 1) if turn == PieceColor.BLACK else (3, -1)
+        # Coords of a pawn that can be captured in passant
+        pawn_coords = None
 
-        for piece in self.board[row]:
-            # Only consider pawns
-            if not piece or piece.type != PieceType.PAWN:
-                continue
+        # Checking if the last move is a two square pawn advance
+        if lastMove:        
+            (r,c) = lastMove.coords[2:]
+            piece_moved = self.board[r][c]
+            pawn_coords = (None if piece_moved.type != PieceType.PAWN or abs(piece_moved.initial_row-r) != 2 
+                                else (r,c)) 
 
-            r, c = piece.position
+        if pawn_coords:
+            # aux tells which direction that pawn moves
+            aux = 1 if turn == PieceColor.BLACK else -1
 
-            # Two possible en passant capture destinations (left and right)
-            targets = [
-                (r + 2 * aux, c - 1, r, c - 1),
-                (r + 2 * aux, c + 1, r, c + 1),
-            ]
-
-            for t_r2, t_c2, t_r1, t_c1 in targets:
-                # Must match last move's coordinates
-                if lastMove.coords != (t_r2, t_c2, t_r1, t_c1):
+            # Checks the squares in the right/left from the target pawn
+            for y in [c+1,c-1]:
+                if(c+1 > 7 or c-1 < 0):
                     continue
 
-                target_piece = self.board[r][t_c1]
+                piece = self.board[r][y]
 
-                # Must be an enemy pawn in the adjacent file
-                if not target_piece or target_piece.type != PieceType.PAWN:
+                # There's no pawn to perform the en passant capture
+                if(not piece or piece.type != PieceType.PAWN):
                     continue
 
-                # Construct the en passant capture move
-                cap_move = Move((r, c, r + aux, t_c1), MoveType.ENPASSANT)
+                enpassant_cap = Move((r,y,r+aux,c),MoveType.ENPASSANT)
 
-                # Temporarily apply the move to check legality
-                pawn_captured = self._apply_move(cap_move)
+                pawn_captured = self._apply_move(enpassant_cap)
 
-                if not self.is_checked(turn):
-                    valid_moves.append(cap_move)
+                if not self.is_checked(turn):   
+                    valid_moves.append(enpassant_cap)
 
-                # Undo the temporary move
-                self._undo_move(cap_move, pawn_captured)
-
+                self._undo_move(enpassant_cap,pawn_captured)
 
         """
         Checking for available castling moves

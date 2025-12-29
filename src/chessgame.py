@@ -98,7 +98,7 @@ class ChessGame():
         piece_captured = self.board.board[move.coords[2]][move.coords[3]] # Might be None depending on the move type
 
         if move.type == MoveType.PROMOTION_CAPTURE or move.type == MoveType.PROMOTION_NORMAL:
-            p1.score += Piece.piece_value(move.promotion)
+            p1.score += Piece.piece_value_dict[move.promotion]
             p1.add_piece(move.promotion)
             p1.remove_piece(PieceType.PAWN)
 

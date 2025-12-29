@@ -50,7 +50,14 @@ def run_testcase(file_path):
             print(actual)
             print()
 
-testcases = ['famous','pawns','stalemates','standard','taxing','checkmates','promotions','castling']
+testcases = ['famous',
+             'pawns',
+             'stalemates',
+             'standard',
+             'taxing',
+             'checkmates',
+             'promotions',
+             'castling']
 
 for i, test in enumerate(testcases):
     print(50*'-')

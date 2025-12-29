@@ -38,13 +38,23 @@ def is_light_square(t: tuple[int,int]) -> bool:
     return (t[0]+t[1]) % 2 == 0
 
 class Piece(ABC):
+    piece_value_dict = {
+            PieceType.PAWN   : 1,
+            PieceType.KNIGHT : 3,
+            PieceType.LIGHT_BISHOP : 3,
+            PieceType.DARK_BISHOP : 3,
+            PieceType.ROOK   : 5,
+            PieceType.QUEEN  : 10,
+            PieceType.KING   : 1000
+        }
+    
     def __init__(self,
                  color: PieceColor,
                  p_type: PieceType,
                  position: tuple[int,int]):
         self.__color = color
         self.__type = p_type
-        self.__value = self.piece_value(p_type)
+        self.__value = Piece.piece_value_dict[p_type]
         self.state = PieceState.NOT_MOVED
         self.position = position
 
@@ -127,25 +137,12 @@ class Piece(ABC):
 
         return moves
 
-    @classmethod
-    def piece_value(cls,piece_type: PieceType) -> int:
-        piece_value_dict = {
-            PieceType.PAWN   : 1,
-            PieceType.KNIGHT : 3,
-            PieceType.LIGHT_BISHOP : 3,
-            PieceType.DARK_BISHOP : 3,
-            PieceType.ROOK   : 5,
-            PieceType.QUEEN  : 10,
-            PieceType.KING   : 1000
-        }
-        return piece_value_dict[piece_type]
-    
 class Pawn(Piece):
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
                          PieceType.PAWN,
                          position)
-        self.inital_row = 6 if self.color == PieceColor.WHITE else 1
+        self.initial_row = 6 if self.color == PieceColor.WHITE else 1
 
     def attacked_squares(self) -> list[tuple[int,int]]:
         """
@@ -168,7 +165,7 @@ class Pawn(Piece):
 
     def get_promotion_moves(self,board) -> list[Move]:
         """
-        Generate promotions moves.
+        Generate the moves of pawn who's about to promote.
         """
         moves = []
         (r,c) = self.position
@@ -226,7 +223,7 @@ class Pawn(Piece):
             moves.append(Move((r,c,r+aux,c),MoveType.NORMAL))
 
             # Checks if we can go two squares up
-            if r == self.inital_row and board[r+2*aux][c] is None:
+            if r == self.initial_row and board[r+2*aux][c] is None:
                 moves.append(Move((r,c,r+2*aux,c),MoveType.NORMAL))
 
         return moves    

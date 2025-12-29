@@ -21,9 +21,10 @@ for fen in fens:
     game.board = board 
     game.white.piecesLeft = [p.type for p in board.board.flat if p and p.color == PieceColor.WHITE]
     game.black.piecesLeft = [p.type for p in board.board.flat if p and p.color == PieceColor.BLACK]
-    game.validMoves = game.board.gen_valid_moves(PieceColor.WHITE,Move((1,1,1,1),MoveType.NORMAL))
+    game.validMoves = game.board.gen_valid_moves(PieceColor.WHITE)
     # print(fen)
     # game.board.print_board()
 
     game._update_state()
     print(game.state.name)
+    

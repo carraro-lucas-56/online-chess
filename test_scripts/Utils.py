@@ -106,27 +106,27 @@ def fen_to_chessboard(fen: str) -> tuple[ChessBoard,list[Move]]:
 
     turn = PieceColor.WHITE if active_color == 'w' else PieceColor.BLACK 
 
-    moveName_to_moveCoords = {
-        "-": (1,1,1,1), 
-        "a3": (6,0,4,0),
-        "b3": (6,1,4,1),
-        "c3": (6,2,4,2),
-        "d3": (6,3,4,3),
-        "e3": (6,4,4,4),
-        "f3": (6,5,4,5),
-        "g3": (6,6,4,6),
-        "h3": (6,7,4,7),
-        "a6": (1,0,3,0),
-        "b6": (1,1,3,1),
-        "c6": (1,2,3,2),
-        "d6": (1,3,3,3),
-        "e6": (1,4,3,4),
-        "f6": (1,5,3,5),
-        "g6": (1,6,3,6),
-        "h6": (1,7,3,7),
+    moveName_to_Move = {
+        "-": None, 
+        "a3": Move((6,0,4,0),MoveType.NORMAL),
+        "b3": Move((6,1,4,1),MoveType.NORMAL),
+        "c3": Move((6,2,4,2),MoveType.NORMAL),
+        "d3": Move((6,3,4,3),MoveType.NORMAL),
+        "e3": Move((6,4,4,4),MoveType.NORMAL),
+        "f3": Move((6,5,4,5),MoveType.NORMAL),
+        "g3": Move((6,6,4,6),MoveType.NORMAL),
+        "h3": Move((6,7,4,7),MoveType.NORMAL),
+        "a6": Move((1,0,3,0),MoveType.NORMAL),
+        "b6": Move((1,1,3,1),MoveType.NORMAL),
+        "c6": Move((1,2,3,2),MoveType.NORMAL),
+        "d6": Move((1,3,3,3),MoveType.NORMAL),
+        "e6": Move((1,4,3,4),MoveType.NORMAL),
+        "f6": Move((1,5,3,5),MoveType.NORMAL),
+        "g6": Move((1,6,3,6),MoveType.NORMAL),
+        "h6": Move((1,7,3,7),MoveType.NORMAL),
     }
 
-    lastMove = Move(moveName_to_moveCoords[enpassant_square],MoveType.NORMAL)
+    lastMove = moveName_to_Move[enpassant_square]
 
     (q,k,row) = ('Q','K',7) if turn == PieceColor.WHITE else ('q','k',0)  
 

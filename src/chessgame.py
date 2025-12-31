@@ -1,6 +1,7 @@
 from src.chessboard import *
 from src.piece import *
 from src.player import *
+import time
 
 class GameState(Enum):
     IN_PROGRESS = 1
@@ -8,16 +9,26 @@ class GameState(Enum):
     STALEMATE = 3
     DRAW_BY_75_MOVE_RULE = 4
     INSUFFICIENT_MATERIAL = 5
-    NOT_STARTED = 6
+    TIMEOUT = 6
+    READY_TO_START = 7
+
+class GameError(Exception):
+    pass
+
+class InvalidMove(GameError):
+    pass
+
+class GameNotInProgress(GameError):
+    pass
 
 class ChessGame():
     def __init__(self):
         self.turn = PieceColor.WHITE
         self.board = ChessBoard()
-        self.state = GameState.NOT_STARTED
-        self.white = Player(PieceColor.WHITE)
-        self.black = Player(PieceColor.BLACK)
-        self.validMoves = [] # List with all the valid moves current available for the colos who's playing in this turn 
+        self.state = GameState.READY_TO_START
+        self.white = Player(PieceColor.WHITE,time_left=600)
+        self.black = Player(PieceColor.BLACK,time_left=600)
+        self.validMoves = self.board.gen_valid_moves(self.turn) # List with all the valid moves current available for the colos who's playing in this turn 
         self.deadMoves = 0   
 
     def _change_turn(self) -> None:
@@ -31,7 +42,7 @@ class ChessGame():
         set_W = set(self.white.piecesLeft)
         set_B = set(self.black.piecesLeft)
 
-        # Insufficient material combination
+        # Insufficient material combinations
         k   = {PieceType.KING}
         kdb = {PieceType.KING,PieceType.DARK_BISHOP}
         klb = {PieceType.KING,PieceType.LIGHT_BISHOP}
@@ -67,7 +78,7 @@ class ChessGame():
             return True
 
 
-        # King + any number of same color bishops vs King
+        # King + any number of same color bishops
         elif (set_B == k and (set_W == kdb or set_W == klb)):
             return True
         # King + Knight vs lone King
@@ -81,6 +92,8 @@ class ChessGame():
         return False
 
     def _update_state(self) -> None:
+        player = self.black if self.turn == PieceColor.WHITE else self.white
+        
         if not self.validMoves:
             self.state = (GameState.CHACKMATE 
                           if self.board.is_checked(self.turn)
@@ -89,80 +102,86 @@ class ChessGame():
             self.state = GameState.DRAW_BY_75_MOVE_RULE
         elif self._insufficient_material():
             self.state = GameState.INSUFFICIENT_MATERIAL
+        elif player.time_left <= 0:
+            self.state = GameState.TIMEOUT
 
-    def _update_player_data(self, p1: Player, p2: Player, move: Move) -> None:
+    def _update_player_data(self,move: Move, turn_start_time: float) -> None:
         """
         Updates players's data based on the provided move.
-        p1 is the player who made the move.
+        p1 is the player who will perform the move.
+        We suppose that the move is valid.
         """
+
+        (p1,p2) = ((self.white,self.black) if self.turn == PieceColor.WHITE 
+                                           else (self.black,self.white))
+
+        p1.time_left = p1.time_left - (time.monotonic() - turn_start_time)
+
+        # There's no more player data to update after a regular move or castling move
+        if move.type == MoveType.NORMAL or move.type == MoveType.CASTLE:
+            return
+
         piece_captured = self.board.board[move.coords[2]][move.coords[3]] # Might be None depending on the move type
 
         if move.type == MoveType.PROMOTION_CAPTURE or move.type == MoveType.PROMOTION_NORMAL:
-            p1.score += Piece.piece_value_dict[move.promotion]
+            p1.score += Piece.piece_value_dict[move.promotion]-1
             p1.add_piece(move.promotion)
             p1.remove_piece(PieceType.PAWN)
 
-        if move.type == MoveType.PROMOTION_CAPTURE:
-            p2.remove_piece(piece_captured.type)
-
-        elif move.type == MoveType.CAPTURE:
-            p1.score += piece_captured.value
-            p2.remove_piece(piece_captured.type)
-
-        elif move.type == MoveType.ENPASSANT:
+        if move.type == MoveType.ENPASSANT:
             p1.score += 1
             p2.remove_piece(PieceType.PAWN)
 
-    def play(self):
-        """
-        Function that runs the game loop
-        """
-        self.state = GameState.IN_PROGRESS
+        else:
+            p1.score += 0 if move.type == MoveType.PROMOTION_CAPTURE else piece_captured.value
+            p2.remove_piece(piece_captured.type)
+
+    def set_initial_setup(self):
+        self.board.reset()
+        self.white.reset(time_left=600)
+        self.black.reset(time_left=600)
+        self.turn = PieceColor.WHITE
         self.validMoves = self.board.gen_valid_moves(self.turn)
+        self.state = GameState.READY_TO_START
+        self.deadMoves = 0
 
-        # Main game loop
-        while(self.state == GameState.IN_PROGRESS):
-            print(self.validMoves)
-            self.board.print_board()
+    def start_game(self):
+        if self.state != GameState.READY_TO_START:
+            self.set_initial_setup()
+        self.state = GameState.IN_PROGRESS
 
-            # Read user move
-            x = int(input())
-            y = int(input())
-            x2 = int(input())
-            y2 = int(input())
+    def play_move(self, x: int, y: int, x2: int, y2: int) -> None:
+        turn_start_time = time.monotonic()
 
-            # Asks for another move ultil we get a valid one
-            while not next((move for move in self.validMoves if (x,y,x2,y2) == move.coords), None):            
-                x = int(input())
-                y = int(input())
-                x2 = int(input())
-                y2 = int(input())
+        if self.state != GameState.IN_PROGRESS:
+            raise GameNotInProgress
 
-            moves = [m for m in self.validMoves if m.coords == (x,y,x2,y2)]
-            
-            # Checking if it's a promotions move
-            if(len(moves) > 1):
-                prom_piece = input()
-                move = next(m for m in moves if m.promotion.value == prom_piece)
-            else:
-                move = moves[0]
+        # Checking which moves matches the given coordinates
+        moves = [m for m in self.validMoves if m.coords == (x,y,x2,y2)]
+        
+        if not moves:
+            raise InvalidMove
 
-            # Checking if it's a dead move
-            self.deadMoves = (self.deadMoves + 1 
-                              if self.board.board[x][y].type != PieceType.PAWN and move.type != MoveType.CAPTURE
-                              else 0)
+        # Checking if it's a promotions move
+        if(len(moves) > 1):
+            prom_piece = input()
+            move = next(m for m in moves if m.promotion.value == prom_piece)
+        else:
+            move = moves[0]
+        self._update_player_data(move,turn_start_time)
+        
+        # Checking if it's a dead move
+        self.deadMoves = (self.deadMoves + 1 
+                          if self.board.board[x][y].type != PieceType.PAWN and move.type != MoveType.CAPTURE
+                          else 0)
+        
+        # Applies the move
+        self.board._apply_move(move)
+        self._change_turn()
 
-            if self.turn == PieceColor.WHITE:
-                self._update_player_data(self.white,self.black,move)
-            else:
-                self._update_player_data(self.black,self.white,move)
+        # Generate the valid moves again
+        self.validMoves = self.board.gen_valid_moves(self.turn,move)
+        
+        # Checks if the game ended
+        self._update_state()
 
-            # Applies the move and checks if the game ended
-            self.board._apply_move(move)
-            self._change_turn()
-            self.validMoves = self.board.gen_valid_moves(self.turn,move)
-
-            self._update_state()
-
-game = ChessGame()
-game.play()

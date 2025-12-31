@@ -31,6 +31,12 @@ class ChessBoard():
         
         return board
 
+    def reset(self):
+        """
+        Set the board back to the initial position.
+        """
+        self.board = self._initial_position()
+
     def _create_piece(self, color: PieceColor, piece_type: PieceType, row: int, col: int) -> Piece:
         """
         Helper function to create the correct piece based on type.
@@ -276,7 +282,8 @@ class ChessBoard():
                 if piece is None:
                     row_str += "   |"
                 else:
-                    symbol = piece.type.value
+                    symbol = (piece.type.value if piece.type != PieceType.LIGHT_BISHOP and piece.type != PieceType.DARK_BISHOP 
+                                               else "B")
                     # White uppercase, black lowercase
                     if piece.color == PieceColor.WHITE:
                         row_str += f" {symbol} |"

@@ -238,7 +238,7 @@ class Knight(Piece):
         moves = []
         (r,c) = self.position
 
-        # all possible destination coords for paths in 'L'
+        # All possible destination coords for paths in 'L'
         coords = [
         (r+2, c+1), (r+2, c-1),
         (r-2, c+1), (r-2, c-1),
@@ -250,7 +250,7 @@ class Knight(Piece):
             if not self._in_bound(x,y):
                 continue 
 
-            # checks if the destination square is empty or has an opposing piece
+            # Checks if the destination square is empty or has an opposing piece
             if(board[x][y] is None):
                 moves.append(Move((r,c,x,y),MoveType.NORMAL))
             elif( board[x][y].color != self.color):
@@ -259,6 +259,9 @@ class Knight(Piece):
         return moves
 
 class Bishop(Piece):
+    # Directions that this piece is allowed to move
+    dirs = [(1,1),(1,-1),(-1,1),(-1,-1)]
+
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
                          (PieceType.LIGHT_BISHOP 
@@ -267,31 +270,36 @@ class Bishop(Piece):
                          position)
 
     def get_moves(self, board):
-        diagonals = [(1,1),(1,-1),(-1,1),(-1,-1)]
-        return self._explore_directions(board,diagonals)
+        return self._explore_directions(board,Bishop.dirs)
 
 class Rook(Piece):
+    # vertical and horizontal directions
+    dirs = [(0,1),(0,-1),(1,0),(-1,0)]
+
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
                          PieceType.ROOK,
                          position)
 
     def get_moves(self, board):
-        # vertical and horizontal directions
-        dirs = [(0,1),(0,-1),(1,0),(-1,0)]
-        return self._explore_directions(board,dirs)
+        return self._explore_directions(board,Rook.dirs)
 
 class Queen(Piece):
+    # Directions that this piece is allowed to move
+    dirs = [(1,1),(1,-1),(-1,1),(-1,-1),(0,1),(-1,0),(0,-1),(1,0)]
+  
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
                          PieceType.QUEEN,
                          position)
 
     def get_moves(self, board):
-        all_dirs = [(1,1),(1,-1),(-1,1),(-1,-1),(0,1),(0,-1),(1,0),(-1,0)]
-        return self._explore_directions(board,all_dirs) 
+        return self._explore_directions(board,Queen.dirs) 
         
 class King(Piece):
+    # Directions that this piece is allowed to move
+    dirs = [(1,1),(1,-1),(-1,1),(-1,-1),(0,1),(-1,0),(0,-1),(1,0)]
+    
     def __init__(self, color: PieceColor, position: tuple[int,int]):
         super().__init__(color,
                          PieceType.KING,
@@ -299,10 +307,9 @@ class King(Piece):
         
     def get_moves(self, board):
         moves = []
-        all_dirs = [(1,1),(1,-1),(-1,1),(-1,-1),(0,1),(-1,0),(0,-1),(1,0)]
         (r,c) = self.position
 
-        for (dr,dc) in all_dirs:
+        for (dr,dc) in King.dirs:
             if(not self._in_bound(r+dr,c+dc)):
                 continue 
         

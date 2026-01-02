@@ -41,21 +41,21 @@ class ChessBoard():
         """
         Helper function to create the correct piece based on type.
         """
-
-        if piece_type == PieceType.PAWN:
-            return Pawn(color, (row, col))
-        elif piece_type == PieceType.LIGHT_BISHOP or piece_type == PieceType.DARK_BISHOP:
-            return Bishop(color, (row, col))
-        elif piece_type == PieceType.KNIGHT:
-            return Knight(color, (row, col))
-        elif piece_type == PieceType.ROOK:
-            return Rook(color, (row, col))
-        elif piece_type == PieceType.QUEEN:
-            return Queen(color, (row, col))
-        elif piece_type == PieceType.KING:
-            return King(color, (row, col))
-        else:
-            raise ValueError(f"Invalid piece type: {piece_type}")
+        match (piece_type):
+            case PieceType.PAWN:
+                return Pawn(color, (row, col))
+            case PieceType.LIGHT_BISHOP | PieceType.DARK_BISHOP:
+                return Bishop(color, (row, col))
+            case PieceType.ROOK:
+                return Rook(color, (row, col))
+            case PieceType.KNIGHT:
+                return Knight(color, (row, col))
+            case PieceType.QUEEN:
+                return Queen(color, (row, col))
+            case PieceType.KING:
+                return King(color, (row, col))
+            case _:
+                raise ValueError(f"Invalid piece type: {piece_type}")
 
     def is_checked(self, turn: PieceColor) -> bool:
         """
@@ -78,10 +78,9 @@ class ChessBoard():
         """
         Generate a list with all the valid moves for a given color in the current chess position
         """
-        valid_moves = []
-        moves = []
+        valid_moves, moves = [], []
 
-        # first get all the spatially possible captures and normal moves
+        # First get all the spatially possible captures and normal moves
         for piece in self.board.flat:
             if piece and piece.color == turn:
                 moves.extend(piece.get_moves(self.board))
@@ -115,8 +114,8 @@ class ChessBoard():
         if lastMove:        
             (r,c) = lastMove.coords[2:]
             piece_moved = self.board[r][c]
-            pawn_coords = (None if piece_moved.type != PieceType.PAWN or abs(piece_moved.initial_row-r) != 2 
-                                else (r,c)) 
+            if piece_moved.type == PieceType.PAWN and abs(piece_moved.initial_row-r) == 2:
+                pawn_coords = (r,c)
 
         if pawn_coords:
             # aux tells which direction that pawn moves
@@ -124,7 +123,7 @@ class ChessBoard():
 
             # Checks the squares in the right/left from the target pawn
             for y in [c+1,c-1]:
-                if(c+1 > 7 or c-1 < 0):
+                if(y > 7 or y < 0):
                     continue
 
                 piece = self.board[r][y]
@@ -228,34 +227,36 @@ class ChessBoard():
         Returns a Piece object if the move is a capture or None if it's a normal move.
         """
         (x,y,x2,y2) = move.coords
-        captured_piece = None
         piece = self.board[x][y]
-
-        # Promoting the pawn into another piece
-        if move.type == MoveType.PROMOTION_NORMAL or move.type == MoveType.PROMOTION_CAPTURE:
-            piece = self._create_piece(piece.color,move.promotion,x2,y2)
+        captured_piece = None
 
         # Emptying the square where the piece was
         self.board[x][y] = None
 
-        if(move.type == MoveType.CAPTURE or move.type == MoveType.PROMOTION_CAPTURE):
-            captured_piece = self.board[x2][y2] 
+        match move.type:
+            case MoveType.PROMOTION_NORMAL |  MoveType.PROMOTION_CAPTURE:
+                piece = self._create_piece(piece.color,move.promotion,x2,y2)
+                if move.type == MoveType.PROMOTION_CAPTURE:
+                    captured_piece = self.board[x2][y2]    
 
-        elif(move.type == MoveType.ENPASSANT):
-            # In a enpassant capture the captured piece is on the left or right side of the moving piece
-            captured_piece = self.board[x][y2]
-            self.board[x][y2] = None
+            case MoveType.CAPTURE:
+                captured_piece = self.board[x2][y2] 
 
-        elif(move.type == MoveType.CASTLE):
-            # Detecting if it's either short or long castle
-            # r_col and r_col2 are the current rook's column and its destination column respectively
-            (r_col,r_col2) = (7,5) if y2 == 6 else (0,3)
+            case MoveType.ENPASSANT:
+                # In a enpassant capture the captured piece is on the left or right side of the moving piece
+                captured_piece = self.board[x][y2]
+                self.board[x][y2] = None
 
-            # Moving the rook            
-            self.board[x][r_col2] = self.board[x][r_col]
-            self.board[x][r_col] = None
-            self.board[x][r_col2].position = (x,r_col2)
-            self.board[x][r_col2].state = PieceState.MOVED
+            case MoveType.CASTLE:
+                # Detecting if it's either short or long castle
+                # r_col and r_col2 are the current rook's column and its destination column respectively
+                (r_col,r_col2) = (7,5) if y2 == 6 else (0,3)
+
+                # Moving the rook            
+                self.board[x][r_col2] = self.board[x][r_col]
+                self.board[x][r_col] = None
+                self.board[x][r_col2].position = (x,r_col2)
+                self.board[x][r_col2].state = PieceState.MOVED
         
         # Putting the moving piece in the destination square
         self.board[x2][y2] = piece 

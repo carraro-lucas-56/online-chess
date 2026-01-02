@@ -168,6 +168,7 @@ class ChessGame():
             move = next(m for m in moves if m.promotion.value == prom_piece)
         else:
             move = moves[0]
+
         self._update_player_data(move,turn_start_time)
         
         # Checking if it's a dead move
@@ -175,7 +176,7 @@ class ChessGame():
                           if self.board.board[x][y].type != PieceType.PAWN and move.type != MoveType.CAPTURE
                           else 0)
         
-        # Applies the move
+        # Applies the move in the board
         self.board._apply_move(move)
         self._change_turn()
 
@@ -185,3 +186,8 @@ class ChessGame():
         # Checks if the game ended
         self._update_state()
 
+# game = ChessGame()
+# game.start_game()
+# game.play_move(6,4,4,4)
+# game.play_move(1,4,3,4)
+# game.board.print_board()

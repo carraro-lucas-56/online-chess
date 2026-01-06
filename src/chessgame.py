@@ -132,7 +132,7 @@ class ChessGame():
             p1.score += 1
             p2.remove_piece(PieceType.PAWN)
 
-        else:
+        elif move.type != MoveType.PROMOTION_NORMAL:
             p1.score += 0 if move.type == MoveType.PROMOTION_CAPTURE else piece_captured.value
             p2.remove_piece(piece_captured.type)
 
@@ -150,7 +150,7 @@ class ChessGame():
             self.set_initial_setup()
         self.state = GameState.IN_PROGRESS
 
-    def play_move(self, x: int, y: int, x2: int, y2: int) -> None:
+    def play_move(self, x: int, y: int, x2: int, y2: int, prom_piece: PieceType | None = None) -> None:
         turn_start_time = time.monotonic()
 
         if self.state != GameState.IN_PROGRESS:
@@ -162,10 +162,9 @@ class ChessGame():
         if not moves:
             raise InvalidMove
 
-        # Checking if it's a promotions move
+        # Checking if it's a promotion move
         if(len(moves) > 1):
-            prom_piece = input()
-            move = next(m for m in moves if m.promotion.value == prom_piece)
+            move = next(m for m in moves if m.promotion == prom_piece)
         else:
             move = moves[0]
 
@@ -185,6 +184,24 @@ class ChessGame():
         
         # Checks if the game ended
         self._update_state()
+
+    def can_toggle_promotion(self, x: int, y: int, x2: int, y2: int) -> bool:
+        """
+        Recives the origin coord from a move and checks if the move can toggle
+        a promotion, i.e the coord has a pawn that's one rank away from promoting 
+        """
+        if x < 0 or x > 7 or y < 0 or y > 7:
+            return False
+        
+        elif not next((move for move in self.validMoves if move.coords == (x,y,x2,y2)), None):
+            return False
+
+        row = 1 if self.turn == PieceColor.WHITE else 6
+
+        return (x == row 
+                and self.board.board[x][y] 
+                and self.board.board[x][y].color == self.turn 
+                and self.board.board[x][y].type == PieceType.PAWN) 
 
 # game = ChessGame()
 # game.start_game()

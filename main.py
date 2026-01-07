@@ -1,20 +1,19 @@
 import pygame, sys
+from assets import ImageCache
 from pygame.locals import *
-from src.chessgame import *
+from src.chessgame import ChessGame
 from dotenv import load_dotenv
+from render.board_view import *
 import os 
 
 load_dotenv()
 ROOT_DIR = os.getenv("ROOT_DIR")
 
-class PieceImage:
-    def __init__(self, piece: Piece, square_size: tuple[int,int]):
-        (r,c) = piece.position
-        name = piece.type.name.lower() if piece.type != PieceType.LIGHT_BISHOP and piece.type != PieceType.DARK_BISHOP else "bishop"
-        image = pygame.image.load(f'{ROOT_DIR}/images/{piece.color.name.lower()}-{name}.png')
-        
-        self.image = pygame.transform.scale(image,square_size)
-        self.rect = Rect((180 + 80*c,130 + 80*r),square_size)
+def load_assets():
+    for color in ("white", "black"):
+        for piece in ("pawn", "rook", "knight", "bishop", "queen", "king"):
+            name = f"{color}-{piece}"
+            ImageCache.load(name, f"{ROOT_DIR}/images/{name}.png")
 
 
 def coord_to_piece(col: int, x: int, y: int, turn: PieceColor) -> PieceType | None:
@@ -49,11 +48,6 @@ pygame.init()
 FPS = 40
 FramePerSec = pygame.time.Clock()
 
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-RED = (255,0,0)
-BLACK = (0, 0, 0)
-
 SCREEN_WIDTH = 1000
 SCREEN_HEIGHT = 900
 SQUARE_SIZE = 80
@@ -62,14 +56,17 @@ SQUARE_SIZE = 80
 DISPLAYSURF = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 pygame.display.set_caption("chess board")
 
+clock = pygame.time.Clock()
+
+black_clock = ClockView((180, 90))
+white_clock = ClockView((180, 130 + 8*SQUARE_SIZE + 20))
+
+load_assets()
 
 game = ChessGame()
 game.start_game()
 
-squares = [[Rect((x,y),(SQUARE_SIZE,SQUARE_SIZE)) for x in range(180,180+(8*SQUARE_SIZE)+1,SQUARE_SIZE)] 
-                                                  for y in range(130,130+(8*SQUARE_SIZE)+1,SQUARE_SIZE)]
-
-pieces = [PieceImage(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]
+boardImage = BoardImage(game, (SQUARE_SIZE,SQUARE_SIZE))
 
 r = c = r2 = c2 = None
 
@@ -79,45 +76,37 @@ prom = False
 # Variable to save which piece the user wants to promote to
 prom_piece = None 
 
-# Images to display the pieces that the user can promote to
-prom_pieces_images = None
-
 running = True
 
 while running:
     DISPLAYSURF.fill(BLACK)
+    
+    if game.state != GameState.IN_PROGRESS:
+        text = game.state.name
+        font = pygame.font.Font(None, 18)
 
-    # Draws the board
-    for x in range(8):
-        for y in range(8):
-            # Highlight selected square, if any
-            if (None not in (r,c)) and r == x and c == y:
-                pygame.draw.rect(DISPLAYSURF,
-                                 RED,
-                                 squares[x][y])
-            else:
-                pygame.draw.rect(DISPLAYSURF,
-                                 WHITE if (x+y) % 2 == 0 else GREEN,
-                                 squares[x][y])
+        img = font.render(text, True, WHITE)
+        DISPLAYSURF.blit(img, (180+8*SQUARE_SIZE+10,500))
 
-    # Draw the pieces 
-    for piece in pieces:
-        DISPLAYSURF.blit(piece.image,piece.rect)
+
+    dt = clock.tick(FPS) / 1000  # seconds
+
+    if game.turn == PieceColor.WHITE:
+        game.white.time_left -= dt
+    else:
+        game.black.time_left -= dt
+
+    white_clock.draw(DISPLAYSURF, game.white.time_left)
+    black_clock.draw(DISPLAYSURF, game.black.time_left)
+
+    boardImage.draw(DISPLAYSURF,highlighted_squares=(r,c))
 
     # Draw promotion 'animation' if there's a promotion happening
     if prom:
-        aux = -1 if game.turn == PieceColor.BLACK else 1
-
-        for i in range(4):
-            pygame.draw.rect(DISPLAYSURF,
-                             WHITE,
-                             Rect((180 + 80*c2,130 + 80*(r2+aux*i)),(SQUARE_SIZE,SQUARE_SIZE)))
-
-        if not prom_pieces_images:
-            prom_pieces_images = [PieceImage(p_type(game.turn,(r2+aux*i,c2)),(SQUARE_SIZE,SQUARE_SIZE)) for (p_type,i) in zip([Queen,Rook,Bishop,Knight],range(4))]
-
-        for piece in prom_pieces_images:
-            DISPLAYSURF.blit(piece.image,piece.rect)
+        try:
+            boardImage.draw_prom_pieces(DISPLAYSURF,r2,c2)
+        except:
+            pass
 
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -131,16 +120,19 @@ while running:
             row = (y - 130) // SQUARE_SIZE
 
             # Checks if a square was clicked 
-            if 0 <= row < 8 and 0 <= col < 8:
-                # If a promotion is happening, checks if the user select a piece to promote to 
-                if prom and not prom_piece:
-                    prom_piece = coord_to_piece(c2,row,col,game.turn)
-                elif None not in (r,c):
-                    r2 = row
-                    c2 = col
-                else:
-                    r = row
-                    c = col
+            if row < 0 or row > 7 or col < 0 or col > 7:
+                continue
+            
+            # If a promotion is happening, checks if the user selected a piece to promote to 
+            if prom and not prom_piece:
+                prom_piece = coord_to_piece(c2,row,col,game.turn)
+            
+            elif None not in (r,c):
+                r2 = row
+                c2 = col
+            else:
+                r = row
+                c = col
 
     # Applies selected move
     if None not in (r, c, r2, c2):
@@ -152,8 +144,9 @@ while running:
         # -> The user is trying to perfrom a promotion and already selected a piece to promote to. 
         elif not prom or prom_piece:
             try:
-                game.play_move(r,c,r2,c2,prom_piece)            
-                pieces = [PieceImage(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]
+                move = game.play_move(r,c,r2,c2,prom_piece)
+                # boardImage.apply_move(move)
+                boardImage.pieces = [PieceImage(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
             except GameNotInProgress:
                 pass
             except InvalidMove:
@@ -161,7 +154,6 @@ while running:
             if prom:
                 prom = False
                 prom_piece = None
-                prom_pieces_images = None 
             r = c = r2 = c2 = None
 
     pygame.display.update()

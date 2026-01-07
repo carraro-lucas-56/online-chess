@@ -115,7 +115,7 @@ class ChessGame():
         (p1,p2) = ((self.white,self.black) if self.turn == PieceColor.WHITE 
                                            else (self.black,self.white))
 
-        p1.time_left = p1.time_left - (time.monotonic() - turn_start_time)
+        # p1.time_left = p1.time_left - (time.monotonic() - turn_start_time)
 
         # There's no more player data to update after a regular move or castling move
         if move.type == MoveType.NORMAL or move.type == MoveType.CASTLE:
@@ -184,6 +184,8 @@ class ChessGame():
         
         # Checks if the game ended
         self._update_state()
+
+        return move
 
     def can_toggle_promotion(self, x: int, y: int, x2: int, y2: int) -> bool:
         """

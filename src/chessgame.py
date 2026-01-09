@@ -2,6 +2,7 @@ from src.chessboard import *
 from src.piece import *
 from src.player import *
 import time
+import random
 
 class GameState(Enum):
     IN_PROGRESS = 1
@@ -27,7 +28,7 @@ class ChessGame():
         self.board = ChessBoard()
         self.state = GameState.READY_TO_START
         self.white = Player(PieceColor.WHITE,time_left=600)
-        self.black = Player(PieceColor.BLACK,time_left=600)
+        self.black = Player(PieceColor.BLACK,time_left=600,robot=True)
         self.validMoves = self.board.gen_valid_moves(self.turn) # List with all the valid moves current available for the colos who's playing in this turn 
         self.deadMoves = 0   
 
@@ -92,6 +93,10 @@ class ChessGame():
         return False
 
     def _update_state(self) -> None:
+        """
+        Functions that checks if the game ended.
+        """
+
         player = self.black if self.turn == PieceColor.WHITE else self.white
         
         if not self.validMoves:
@@ -108,6 +113,7 @@ class ChessGame():
     def _update_player_data(self,move: Move, turn_start_time: float) -> None:
         """
         Updates players's data based on the provided move.
+        
         p1 is the player who will perform the move.
         We suppose that the move is valid.
         """
@@ -137,6 +143,10 @@ class ChessGame():
             p2.remove_piece(piece_captured.type)
 
     def set_initial_setup(self):
+        """
+        Sets the game back to it's inital state.
+        """
+
         self.board.reset()
         self.white.reset(time_left=600)
         self.black.reset(time_left=600)
@@ -150,7 +160,27 @@ class ChessGame():
             self.set_initial_setup()
         self.state = GameState.IN_PROGRESS
 
+    def toggle_robot_move(self):
+        if not self.validMoves:
+            return 
+
+        random_integer = random.randint(0, len(self.validMoves)-1)
+        move = self.validMoves[random_integer]
+
+        if move.type == MoveType.PROMOTION_CAPTURE or move.type == MoveType.PROMOTION_NORMAL:
+            self.play_move(*move.coords,move.promotion)
+        else:
+            self.play_move(*move.coords)
+
     def play_move(self, x: int, y: int, x2: int, y2: int, prom_piece: PieceType | None = None) -> None:
+        """
+        Validates and applies a move given by board coordinates.
+
+        Handles promotion resolution, updates player clocks, applies the move
+        to the board, switches turn, regenerates legal moves, and updates
+        the game state.
+        """
+        
         turn_start_time = time.monotonic()
 
         if self.state != GameState.IN_PROGRESS:
@@ -170,27 +200,25 @@ class ChessGame():
 
         self._update_player_data(move,turn_start_time)
         
-        # Checking if it's a dead move
+        # Update 75-move rule counter
         self.deadMoves = (self.deadMoves + 1 
                           if self.board.board[x][y].type != PieceType.PAWN and move.type != MoveType.CAPTURE
                           else 0)
         
-        # Applies the move in the board
         self.board._apply_move(move)
         self._change_turn()
 
-        # Generate the valid moves again
         self.validMoves = self.board.gen_valid_moves(self.turn,move)
         
-        # Checks if the game ended
         self._update_state()
 
         return move
 
     def can_toggle_promotion(self, x: int, y: int, x2: int, y2: int) -> bool:
         """
-        Recives the origin coord from a move and checks if the move can toggle
-        a promotion, i.e the coord has a pawn that's one rank away from promoting 
+        Recives the origin coord from a move and checks if the move can toggle.
+
+        a promotion, i.e the coord has a pawn that's one rank away from promoting. 
         """
         if x < 0 or x > 7 or y < 0 or y > 7:
             return False

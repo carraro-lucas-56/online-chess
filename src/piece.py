@@ -84,6 +84,7 @@ class Piece(ABC):
     def get_moves(self, board) -> list[Move]:
         """
         Return all spatially possible moves for the piece in the given board.
+
         Do not include en passant captures and castling.
         Those moves ARE NOT necessarily valid.
         Move validations are done in a different section of the code.
@@ -93,10 +94,11 @@ class Piece(ABC):
         """
         This function 'walks' in the board with the piece in the given directions 
         and returns all the available moves it found.
+
         It is really usefull because it generalizes the code for moving Queen, Rook and Bishop
         We use tuple of 1's and 0's to represent the directions.
         Examples: (0,1) represents straight right direction, 
-                  (-1,-1) represents the down left direction
+                  (-1,-1) represents the down left diagonal.
         """
         
         moves = []        
@@ -146,7 +148,7 @@ class Pawn(Piece):
 
     def attacked_squares(self) -> list[tuple[int,int]]:
         """
-        Returns the coordinates of all the coords that the pawn is attacking
+        Returns the coordinates of all the squares that the pawn is attacking
         """
         aux = 1 if self.color == PieceColor.BLACK else -1
         (r,c) = self.position

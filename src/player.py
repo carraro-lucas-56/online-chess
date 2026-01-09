@@ -1,11 +1,17 @@
-from src.piece import PieceColor, PieceType, Piece
+from src.piece import PieceColor, PieceType
+from enum import Enum
+
+class PlayerType(Enum):
+    HUMAN = 1
+    ROBOT = 2
 
 class Player:
-    def __init__(self, color: PieceColor, time_left: float):
+    def __init__(self, color: PieceColor, time_left: float, robot=False):
         self.__color = color 
         self.score = 0
         self.time_left = time_left 
         self.piecesLeft = [p_type for p_type in  PieceType] + [PieceType.KNIGHT,PieceType.ROOK] + 7*[PieceType.PAWN]
+        self.type = PlayerType.ROBOT if robot else PlayerType.HUMAN
 
     @property
     def color(self):

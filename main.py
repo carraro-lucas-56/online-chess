@@ -88,7 +88,6 @@ while running:
         img = font.render(text, True, WHITE)
         DISPLAYSURF.blit(img, (180+8*SQUARE_SIZE+10,500))
 
-
     dt = clock.tick(FPS) / 1000  # seconds
 
     if game.turn == PieceColor.WHITE:
@@ -119,7 +118,7 @@ while running:
             col = (x - 180) // SQUARE_SIZE
             row = (y - 130) // SQUARE_SIZE
 
-            # Checks if a square was clicked 
+            # Checks if a non-square coord was clicked 
             if row < 0 or row > 7 or col < 0 or col > 7:
                 continue
             
@@ -134,8 +133,12 @@ while running:
                 r = row
                 c = col
 
+    if game.turn == PieceColor.BLACK:
+        game.toggle_robot_move()
+        boardImage.pieces = [PieceImage(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]  
+
     # Applies selected move
-    if None not in (r, c, r2, c2):
+    elif None not in (r, c, r2, c2):
         # Checks if the user is trying to perform a valid promotion.
         if not prom and game.can_toggle_promotion(r,c,r2,c2):
             prom = True

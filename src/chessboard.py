@@ -76,7 +76,7 @@ class ChessBoard():
     
     def gen_valid_moves(self, turn: PieceColor, lastMove: Move | None = None) -> list[Move]:
         """
-        Generate a list with all the valid moves for a given color in the current chess position
+        Generate a list with all the valid moves for a given color in the current chess position.
         """
         valid_moves, moves = [], []
 
@@ -85,22 +85,18 @@ class ChessBoard():
             if piece and piece.color == turn:
                 moves.extend(piece.get_moves(self.board))
 
-        """
-        Iterate over all the moves to check if they're valid.
-        First we apply the move in the board.
-        If the king is checked in the resulting board, the move isn't valid. 
-        """
+        # Iterate over all the moves to check if they're valid.
+        # First we apply the move in the board.
+        # If the king is checked in the resulting board, the move isn't valid. 
         for move in moves:
             (x,y) = move.coords[0:2]
             old_state = self.board[x][y].state
 
-            # temporarily appying the move so we can check if it's valid
             piece_captured = self._apply_move(move)
             
             if(not self.is_checked(turn)):
                 valid_moves.append(move)
 
-            # undo the move so we can repeat the process
             self._undo_move(move,piece_captured,old_state)
 
         """
@@ -197,6 +193,7 @@ class ChessBoard():
     def _undo_move(self, move: Move, piece_captured: Piece | None = None, piece_old_state: PieceState | None = None) -> None:
         """
         Undo a given chess move.
+
         piece_old_state is the state of the piece who moved before the move was performed, that's important
         when we're undoing the first move the piece made in the match.
         """
@@ -224,6 +221,7 @@ class ChessBoard():
     def _apply_move(self, move: Move) -> None | Piece:
         """
         Changes piece positions in order to apply the move.
+        
         Returns a Piece object if the move is a capture or None if it's a normal move.
         """
         (x,y,x2,y2) = move.coords
@@ -268,6 +266,7 @@ class ChessBoard():
     def print_board(self):
         """
         Prints the chessboard to the terminal using simple ASCII characters.
+
         Uppercase = White, lowercase = Black.
         """
 

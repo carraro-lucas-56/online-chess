@@ -7,23 +7,29 @@ WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 RED = (255,0,0)
 BLACK = (0, 0, 0)
+GREY = (128, 128, 128)
 
 class PieceImage:
-    def __init__(self, piece: Piece, square_size: tuple[int, int]):
-        r, c = piece.position
-        p_name = "bishop" if piece.type in (
+    def __init__(self, pos, p_type, p_color, square_size):
+        self.rect = Rect(pos,square_size)
+        p_name = "bishop" if p_type in (
             PieceType.LIGHT_BISHOP, PieceType.DARK_BISHOP
-        ) else piece.type.name.lower()
-        name = f"{piece.color.name.lower()}-{p_name}"
+        ) else p_type.name.lower()
+        name = f"{p_color.name.lower()}-{p_name}"
 
         self.image = ImageCache.get(name, square_size)
-        self.rect = Rect((180 + 80*c, 130 + 80*r), square_size)
+
+    @classmethod
+    def from_piece_obj(cls, piece: Piece, square_size: tuple[int, int]):
+        r,c = piece.position
+        return cls((180 + 80*c, 130 + 80*r),piece.type,piece.color,square_size)
 
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
     def update_position(self,r: int, c: int, square_size):
         self.rect = Rect((180 + 80*c,130 + 80*r),square_size)
+
 
 class InvalidPromotionSquare(Exception):
     pass
@@ -34,8 +40,8 @@ class BoardImage:
                                                   for y in range(130,130+(8*square_size[0])+1,square_size[0])]
 
         self.square_size = square_size
-        self.pieces = [PieceImage(piece,square_size) for piece in game.board.board.flat if piece]
-        self.prom_pieces = [PieceImage(p_type(game.turn,(0+i,0)),square_size) 
+        self.pieces = [PieceImage.from_piece_obj(piece,square_size) for piece in game.board.board.flat if piece]
+        self.prom_pieces = [PieceImage.from_piece_obj(p_type(game.turn,(0+i,0)),square_size) 
                                        for (p_type,i) in zip([Queen,Rook,Bishop,Knight],range(4))]
 
     def draw_prom_pieces(self, surface: pygame.Surface, r: int, c: int):
@@ -75,16 +81,3 @@ class BoardImage:
         for piece in self.pieces:
             piece.draw(surface)
 
-
-class ClockView:
-    def __init__(self, pos):
-        self.font = pygame.font.Font(None, 36)
-        self.pos = pos
-
-    def draw(self, surface, seconds: float):
-        minutes = int(seconds) // 60
-        secs = int(seconds) % 60
-        text = f"{minutes:02}:{secs:02}"
-
-        img = self.font.render(text, True, WHITE)
-        surface.blit(img, self.pos)

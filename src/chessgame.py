@@ -13,6 +13,14 @@ class GameState(Enum):
     TIMEOUT = 6
     READY_TO_START = 7
 
+@dataclass(frozen=True)
+class GameSnapshot:
+    validMoves: list[Move]
+    state: GameState 
+    board: np.ndarray 
+    deadMoves: int = 0
+    lastMove: Move = None
+
 class GameError(Exception):
     pass
 
@@ -30,6 +38,9 @@ class ChessGame():
         self.white = Player(PieceColor.WHITE,time_left=600)
         self.black = Player(PieceColor.BLACK,time_left=600,robot=True)
         self.validMoves = self.board.gen_valid_moves(self.turn) # List with all the valid moves current available for the colos who's playing in this turn 
+        self.stateHistory = [GameSnapshot(validMoves=self.validMoves,
+                                              state=self.state,
+                                              board=self.board.board)]
         self.deadMoves = 0   
 
     def _change_turn(self) -> None:
@@ -123,35 +134,48 @@ class ChessGame():
 
         # p1.time_left = p1.time_left - (time.monotonic() - turn_start_time)
 
-        # There's no more player data to update after a regular move or castling move
-        if move.type == MoveType.NORMAL or move.type == MoveType.CASTLE:
-            return
-
-        piece_captured = self.board.board[move.coords[2]][move.coords[3]] # Might be None depending on the move type
-
-        if move.type == MoveType.PROMOTION_CAPTURE or move.type == MoveType.PROMOTION_NORMAL:
-            p1.score += Piece.piece_value_dict[move.promotion]-1
-            p1.add_piece(move.promotion)
-            p1.remove_piece(PieceType.PAWN)
-
-        if move.type == MoveType.ENPASSANT:
-            p1.score += 1
-            p2.remove_piece(PieceType.PAWN)
-
-        elif move.type != MoveType.PROMOTION_NORMAL:
-            p1.score += 0 if move.type == MoveType.PROMOTION_CAPTURE else piece_captured.value
+        piece_captured = (self.board.board[move.coords[0]][move.coords[3]] 
+                          if move.type == MoveType.ENPASSANT 
+                          else self.board.board[move.coords[2]][move.coords[3]])
+        
+        if(piece_captured):
+            p1.add_captured_piece(piece_captured.type)
             p2.remove_piece(piece_captured.type)
 
-    def set_initial_setup(self):
-        """
-        Sets the game back to it's inital state.
-        """
+        match move.type:
+            case MoveType.PROMOTION_NORMAL | MoveType.PROMOTION_CAPTURE:
+                p1.add_piece(move.promotion)
+                p1.remove_piece(PieceType.PAWN)
+                p1.score += Piece.piece_value_dict[move.promotion]-1
+            case MoveType.CAPTURE | MoveType.ENPASSANT:
+                p1.score += Piece.piece_value_dict[piece_captured.type]
 
+    def _undo_player_data (self, move: Move, piece_captured: Piece | None = None) -> None:  
+
+        (p1,p2) = ((self.white,self.black) if self.turn == PieceColor.WHITE 
+                                           else (self.black,self.white))
+
+        if piece_captured:        
+            p1.remove_captured_piece()
+            p2.add_piece(piece_captured.type)
+
+        match move.type:
+            case MoveType.PROMOTION_NORMAL | MoveType.PROMOTION_CAPTURE:
+                p1.add_piece(PieceType.PAWN)
+                p1.remove_piece(move.promotion)
+                p1.score -= Piece.piece_value_dict[move.promotion]-1
+            case MoveType.CAPTURE | MoveType.ENPASSANT:
+                p1.score -= Piece.piece_value_dict[piece_captured.type]
+
+    def set_initial_setup(self):
         self.board.reset()
         self.white.reset(time_left=600)
         self.black.reset(time_left=600)
         self.turn = PieceColor.WHITE
         self.validMoves = self.board.gen_valid_moves(self.turn)
+        self.stateHistory = [GameSnapshot(validMoves=self.validMoves,
+                                          state=self.state,
+                                          board=self.board.board)]
         self.state = GameState.READY_TO_START
         self.deadMoves = 0
 
@@ -205,14 +229,58 @@ class ChessGame():
                           if self.board.board[x][y].type != PieceType.PAWN and move.type != MoveType.CAPTURE
                           else 0)
         
-        self.board._apply_move(move)
-        self._change_turn()
-
-        self.validMoves = self.board.gen_valid_moves(self.turn,move)
+        self.board.apply_move(move)
         
+        self._change_turn()
         self._update_state()
 
-        return move
+        self.validMoves = self.board.gen_valid_moves(self.turn,move)
+
+        self.stateHistory.append(GameSnapshot(lastMove=move,
+                                                  deadMoves=self.deadMoves,
+                                                  validMoves=self.validMoves,
+                                                  board=self.board.board.copy(),
+                                                  state=self.state))
+        
+    def unplay_move(self, pop: bool=False) -> None:
+        """
+        Undo the last move done in the game.
+        """
+
+        # there's no more moves to undo
+        if len(self.stateHistory) < 2:
+            return 
+
+        self._change_turn()
+        
+        prev_state = self.stateHistory[-2]
+
+        move = self.stateHistory[-1].lastMove
+        (x,y,x2,y2) = move.coords
+        
+        piece_old_state = PieceState.MOVED
+        piece_captured = None
+
+        match move.type:
+            case MoveType.CAPTURE | MoveType.PROMOTION_CAPTURE:
+                piece_captured = prev_state.board[x2][y2]
+            case  MoveType.ENPASSANT:
+                piece_captured = prev_state.board[x][y2] 
+            case  MoveType.CASTLE:
+                piece_old_state = PieceState.NOT_MOVED
+        
+        self.board.undo_move(move,piece_captured,piece_old_state)
+
+        self.deadMoves = prev_state.deadMoves
+
+        self.validMoves = prev_state.validMoves
+        
+        self._undo_player_data(move,piece_captured)
+
+        self.state = prev_state.state
+
+        if pop:
+            self.stateHistory.pop()
 
     def can_toggle_promotion(self, x: int, y: int, x2: int, y2: int) -> bool:
         """
@@ -232,9 +300,4 @@ class ChessGame():
                 and self.board.board[x][y] 
                 and self.board.board[x][y].color == self.turn 
                 and self.board.board[x][y].type == PieceType.PAWN) 
-
-# game = ChessGame()
-# game.start_game()
-# game.play_move(6,4,4,4)
-# game.play_move(1,4,3,4)
-# game.board.print_board()
+    

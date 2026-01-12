@@ -4,6 +4,7 @@ from pygame.locals import *
 from src.chessgame import ChessGame
 from dotenv import load_dotenv
 from render.board_view import *
+from render.hud import Hud
 import os 
 
 load_dotenv()
@@ -14,7 +15,6 @@ def load_assets():
         for piece in ("pawn", "rook", "knight", "bishop", "queen", "king"):
             name = f"{color}-{piece}"
             ImageCache.load(name, f"{ROOT_DIR}/images/{name}.png")
-
 
 def coord_to_piece(col: int, x: int, y: int, turn: PieceColor) -> PieceType | None:
     """
@@ -58,13 +58,12 @@ pygame.display.set_caption("chess board")
 
 clock = pygame.time.Clock()
 
-black_clock = ClockView((180, 90))
-white_clock = ClockView((180, 130 + 8*SQUARE_SIZE + 20))
-
 load_assets()
 
 game = ChessGame()
 game.start_game()
+
+hud = Hud(game,SQUARE_SIZE)
 
 boardImage = BoardImage(game, (SQUARE_SIZE,SQUARE_SIZE))
 
@@ -79,7 +78,7 @@ prom_piece = None
 running = True
 
 while running:
-    DISPLAYSURF.fill(BLACK)
+    DISPLAYSURF.fill(GREY)
     
     if game.state != GameState.IN_PROGRESS:
         text = game.state.name
@@ -95,10 +94,8 @@ while running:
     else:
         game.black.time_left -= dt
 
-    white_clock.draw(DISPLAYSURF, game.white.time_left)
-    black_clock.draw(DISPLAYSURF, game.black.time_left)
-
     boardImage.draw(DISPLAYSURF,highlighted_squares=(r,c))
+    hud.draw(DISPLAYSURF)
 
     # Draw promotion 'animation' if there's a promotion happening
     if prom:
@@ -112,6 +109,11 @@ while running:
             pygame.quit()
             sys.exit()
          
+        if event.type == pygame.KEYUP and event.key == K_u:
+            game.unplay_move(pop=True)
+            boardImage.pieces = [PieceImage.from_piece_obj(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
+            r = r2 = c = c2 = None
+
         # Get user's click coords 
         if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             x, y = event.pos
@@ -133,12 +135,8 @@ while running:
                 r = row
                 c = col
 
-    if game.turn == PieceColor.BLACK:
-        game.toggle_robot_move()
-        boardImage.pieces = [PieceImage(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]  
-
     # Applies selected move
-    elif None not in (r, c, r2, c2):
+    if None not in (r, c, r2, c2):
         # Checks if the user is trying to perform a valid promotion.
         if not prom and game.can_toggle_promotion(r,c,r2,c2):
             prom = True
@@ -147,9 +145,8 @@ while running:
         # -> The user is trying to perfrom a promotion and already selected a piece to promote to. 
         elif not prom or prom_piece:
             try:
-                move = game.play_move(r,c,r2,c2,prom_piece)
-                # boardImage.apply_move(move)
-                boardImage.pieces = [PieceImage(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
+                game.play_move(r,c,r2,c2,prom_piece)
+                boardImage.pieces = [PieceImage.from_piece_obj(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
             except GameNotInProgress:
                 pass
             except InvalidMove:

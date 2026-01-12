@@ -92,12 +92,12 @@ class ChessBoard():
             (x,y) = move.coords[0:2]
             old_state = self.board[x][y].state
 
-            piece_captured = self._apply_move(move)
+            piece_captured = self.apply_move(move)
             
             if(not self.is_checked(turn)):
                 valid_moves.append(move)
 
-            self._undo_move(move,piece_captured,old_state)
+            self.undo_move(move,piece_captured,old_state)
 
         """
         checking for available en passant captures
@@ -130,12 +130,12 @@ class ChessBoard():
 
                 enpassant_cap = Move((r,y,r+aux,c),MoveType.ENPASSANT)
 
-                pawn_captured = self._apply_move(enpassant_cap)
+                pawn_captured = self.apply_move(enpassant_cap)
 
                 if not self.is_checked(turn):   
                     valid_moves.append(enpassant_cap)
 
-                self._undo_move(enpassant_cap,pawn_captured)
+                self.undo_move(enpassant_cap,pawn_captured)
 
         """
         Checking for available castling moves
@@ -190,7 +190,7 @@ class ChessBoard():
 
         return valid_moves                
 
-    def _undo_move(self, move: Move, piece_captured: Piece | None = None, piece_old_state: PieceState | None = None) -> None:
+    def undo_move(self, move: Move, piece_captured: Piece | None = None, piece_old_state: PieceState | None = None) -> None:
         """
         Undo a given chess move.
 
@@ -210,7 +210,6 @@ class ChessBoard():
             # Putting the captured pawn back to the left or right square
             self.board[x][y2] = piece_captured
 
-            # Emptying the destination square
             self.board[x2][y2] = None
         else:
             self.board[x][y].state = piece_old_state
@@ -218,7 +217,17 @@ class ChessBoard():
             # Putting the captured piece back in the board
             self.board[x2][y2] = piece_captured
 
-    def _apply_move(self, move: Move) -> None | Piece:
+        if(move.type == MoveType.CASTLE):
+            # Rook col
+            (aux,r_col) = (-1,7) if y-y2 < 0 else (1,0)
+            
+            self.board[x][r_col] = self.board[x][y2+aux]
+            self.board[x][r_col].position = (x,r_col)
+            self.board[x][y2+aux].state = PieceState.NOT_MOVED
+            self.board[x][y2+aux] = None
+            
+
+    def apply_move(self, move: Move) -> None | Piece:
         """
         Changes piece positions in order to apply the move.
         

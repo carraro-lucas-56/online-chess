@@ -23,6 +23,7 @@ def numCoord_to_chessCoord(x: int, y: int) -> str:
 def moveObj_to_moveName(move: Move, all_moves: list[Move], board: np.ndarray) -> str:
     """
     Converts a Move Object into a string with the move name in Algebraic Notation.
+
     https://en.wikipedia.org/wiki/Algebraic_notation_(chess) -> link to move naming rules.
     """
     (x,y,x2,y2) = move.coords
@@ -71,7 +72,8 @@ def moveObj_to_moveName(move: Move, all_moves: list[Move], board: np.ndarray) ->
 
 def fen_to_chessboard(fen: str) -> tuple[ChessBoard,list[Move]]:
     """
-    Converts a FEN string into a ChessBoard object
+    Converts a FEN string into a ChessBoard object.
+    
     https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation -> info about FEN notation
     """
     np_board = np.full((8, 8), None, dtype=object)

@@ -37,16 +37,18 @@ class Move:
 def is_light_square(t: tuple[int,int]) -> bool:
     return (t[0]+t[1]) % 2 == 0
 
+PIECE_VALUES: dict[PieceType, int] = {
+    PieceType.PAWN: 1,
+    PieceType.KNIGHT: 3,
+    PieceType.LIGHT_BISHOP: 3,
+    PieceType.DARK_BISHOP: 3,
+    PieceType.ROOK: 5,
+    PieceType.QUEEN: 10,
+    PieceType.KING: 1000,
+}
+
+
 class Piece(ABC):
-    piece_value_dict = {
-            PieceType.PAWN   : 1,
-            PieceType.KNIGHT : 3,
-            PieceType.LIGHT_BISHOP : 3,
-            PieceType.DARK_BISHOP : 3,
-            PieceType.ROOK   : 5,
-            PieceType.QUEEN  : 10,
-            PieceType.KING   : 1000
-        }
     
     def __init__(self,
                  color: PieceColor,
@@ -54,7 +56,7 @@ class Piece(ABC):
                  position: tuple[int,int]):
         self.__color = color
         self.__type = p_type
-        self.__value = Piece.piece_value_dict[p_type]
+        self.__value = PIECE_VALUES[p_type]
         self.state = PieceState.NOT_MOVED
         self.position = position
 
@@ -323,3 +325,23 @@ class King(Piece):
 
         return moves
     
+def create_piece(color: PieceColor, piece_type: PieceType, row: int, col: int) -> Piece:
+    """
+    Helper function to create the correct piece based on type.
+    """
+    match (piece_type):
+        case PieceType.PAWN:
+            return Pawn(color, (row, col))
+        case PieceType.LIGHT_BISHOP | PieceType.DARK_BISHOP:
+            return Bishop(color, (row, col))
+        case PieceType.ROOK:
+            return Rook(color, (row, col))
+        case PieceType.KNIGHT:
+            return Knight(color, (row, col))
+        case PieceType.QUEEN:
+            return Queen(color, (row, col))
+        case PieceType.KING:
+            return King(color, (row, col))
+        case _:
+            raise ValueError(f"Invalid piece type: {piece_type}")
+        

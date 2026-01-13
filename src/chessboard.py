@@ -1,5 +1,8 @@
-from src.piece import *
 import numpy as np
+
+from src.piece import (Piece, PieceState, PieceType, PieceColor,  
+                       Move, MoveType, create_piece)
+
 
 class ChessBoard():
     def __init__(self,customBoard: np.ndarray | None = None):
@@ -21,13 +24,13 @@ class ChessBoard():
         
         # Place black pieces (row 0 and row 1)
         for y, piece_type in enumerate(self.black_back_rank_layout):
-            board[0, y] = self._create_piece(PieceColor.BLACK, PieceType(piece_type), 0, y)
-        board[1] = [Pawn(PieceColor.BLACK, (1, y)) for y in range(8)]
+            board[0, y] = create_piece(PieceColor.BLACK, PieceType(piece_type), 0, y)
+        board[1] = [create_piece(PieceColor.BLACK, PieceType.PAWN, 1, y) for y in range(8)]
         
         # Place white pieces (row 6 and row 7)
-        board[6] = [Pawn(PieceColor.WHITE, (6, y)) for y in range(8)]
+        board[6] = [create_piece(PieceColor.WHITE, PieceType.PAWN, 6, y) for y in range(8)]
         for y, piece_type in enumerate(self.white_back_rank_layout):
-            board[7, y] = self._create_piece(PieceColor.WHITE, PieceType(piece_type), 7, y)
+            board[7, y] = create_piece(PieceColor.WHITE, PieceType(piece_type), 7, y)
         
         return board
 
@@ -36,26 +39,6 @@ class ChessBoard():
         Set the board back to the initial position.
         """
         self.board = self._initial_position()
-
-    def _create_piece(self, color: PieceColor, piece_type: PieceType, row: int, col: int) -> Piece:
-        """
-        Helper function to create the correct piece based on type.
-        """
-        match (piece_type):
-            case PieceType.PAWN:
-                return Pawn(color, (row, col))
-            case PieceType.LIGHT_BISHOP | PieceType.DARK_BISHOP:
-                return Bishop(color, (row, col))
-            case PieceType.ROOK:
-                return Rook(color, (row, col))
-            case PieceType.KNIGHT:
-                return Knight(color, (row, col))
-            case PieceType.QUEEN:
-                return Queen(color, (row, col))
-            case PieceType.KING:
-                return King(color, (row, col))
-            case _:
-                raise ValueError(f"Invalid piece type: {piece_type}")
 
     def is_checked(self, turn: PieceColor) -> bool:
         """
@@ -201,7 +184,7 @@ class ChessBoard():
         
         # Put the piece back on the origin square and updates its position
         if(move.type == MoveType.PROMOTION_CAPTURE or move.type == MoveType.PROMOTION_NORMAL):
-            self.board[x][y] = self._create_piece(self.board[x2][y2].color,PieceType.PAWN,x,y)
+            self.board[x][y] = create_piece(self.board[x2][y2].color,PieceType.PAWN,x,y)
         else:
             self.board[x][y] = self.board[x2][y2]
             self.board[x][y].position = (x,y)
@@ -242,7 +225,7 @@ class ChessBoard():
 
         match move.type:
             case MoveType.PROMOTION_NORMAL |  MoveType.PROMOTION_CAPTURE:
-                piece = self._create_piece(piece.color,move.promotion,x2,y2)
+                piece = create_piece(piece.color,move.promotion,x2,y2)
                 if move.type == MoveType.PROMOTION_CAPTURE:
                     captured_piece = self.board[x2][y2]    
 

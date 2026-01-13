@@ -1,11 +1,13 @@
-import pygame, sys
-from assets import ImageCache
+import pygame, sys, os
 from pygame.locals import *
-from src.chessgame import ChessGame
 from dotenv import load_dotenv
-from render.board_view import *
+
+from assets import ImageCache
+from src.chessgame import ChessGame, GameState, InvalidMove, GameNotInProgress
+from src.piece import PieceType, PieceColor, is_light_square
+from render.board_view import BoardImage, PieceImage
+from render.colors import WHITE, GREY
 from render.hud import Hud
-import os 
 
 load_dotenv()
 ROOT_DIR = os.getenv("ROOT_DIR")

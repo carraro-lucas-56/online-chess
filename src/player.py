@@ -1,5 +1,6 @@
-from src.piece import PieceColor, PieceType
 from enum import Enum
+
+from src.piece import PieceColor, PieceType
 
 class PlayerType(Enum):
     HUMAN = 1

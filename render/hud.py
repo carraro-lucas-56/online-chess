@@ -1,11 +1,8 @@
 import pygame
-from src.chessgame import ChessGame, PieceColor
-from render.board_view import PieceImage
 
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-RED = (255,0,0)
-BLACK = (0, 0, 0)
+from src.chessgame import ChessGame, PieceColor, PieceType
+from render.board_view import PieceImage
+from render.colors import WHITE
 
 class ClockView:
     def __init__(self, pos):
@@ -34,6 +31,28 @@ class ScoreView():
             img = self.font.render(f'+{black_score-white_score}', True, WHITE)
             surface.blit(img, self.pos_black)
 
+class PiecesCapturedView():
+    def __init__(self, squre_size: tuple[int,int], pos: tuple[int,int], p_color: PieceColor):
+        self.square_size = squre_size
+        self.pieces = []
+        self.pos = pos # Position of the first piece to be drawn
+        self.color = p_color
+
+    def draw(self, surface: pygame.Surface, ps_captured: list[PieceType]):
+        if len(self.pieces) < len(ps_captured):
+            x = len(self.pieces)
+            p_type = ps_captured[-1]
+            self.pieces.append(PieceImage(pos=(self.pos[0]+x*20,self.pos[1]),
+                                          square_size=(30,30),
+                                          p_type=p_type,
+                                          p_color=self.color))
+
+        elif len(self.pieces) > len(ps_captured):
+            self.pieces.pop()
+
+        for piece in self.pieces:
+            piece.draw(surface)
+
 class Hud:
     def __init__(self, game: ChessGame, square_size: int):
         self.square_size = square_size
@@ -41,8 +60,12 @@ class Hud:
         self.white_clock = ClockView((180, 130 + 8*square_size+ 20))
         self.score = ScoreView(pos_white=(180+7.5*self.square_size,130+8*self.square_size+20),
                                pos_black=(180+7.5*self.square_size,90))
-        self.white_pieces_capt = []
-        self.black_pieces_capt = []
+        self.white_pieces_capt = PiecesCapturedView(pos=(400,130+8*self.square_size+20),
+                                                    p_color=PieceColor.BLACK,
+                                                    squre_size=(30,30))
+        self.black_pieces_capt = PiecesCapturedView(pos=(400,90),
+                                                    p_color=PieceColor.WHITE,
+                                                    squre_size=(30,30))
         self.game = game
 
     def draw(self, surface: pygame.Surface) -> None:
@@ -53,24 +76,6 @@ class Hud:
                         white_score=self.game.white.score,
                         black_score=self.game.black.score)
         
-        if len(self.white_pieces_capt) < len(self.game.white.piecesCaptured):
-            x = len(self.white_pieces_capt)
-            p_type = self.game.white.piecesCaptured[-1]
-            self.white_pieces_capt.append(PieceImage(pos=(400+20*x,130+8*self.square_size+20),
-                                                     square_size=(30,30),
-                                                     p_type=p_type,
-                                                     p_color=PieceColor.BLACK))
-
-        if len(self.black_pieces_capt) < len(self.game.black.piecesCaptured):
-            x = len(self.black_pieces_capt)
-            p_type = self.game.black.piecesCaptured[-1]
-            self.black_pieces_capt.append(PieceImage(pos=(400+20*x,90),
-                                                     square_size=(30,30),
-                                                     p_type=p_type,
-                                                     p_color=PieceColor.WHITE))
-        
-        for piece in self.black_pieces_capt:
-            piece.draw(surface)
-        for piece in self.white_pieces_capt:
-            piece.draw(surface)
+        self.white_pieces_capt.draw(surface,self.game.white.piecesCaptured)
+        self.black_pieces_capt.draw(surface,self.game.black.piecesCaptured)
             

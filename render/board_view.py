@@ -1,13 +1,10 @@
 import pygame 
 from pygame.locals import *
-from src.chessgame import *
-from assets import ImageCache
 
-WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
-RED = (255,0,0)
-BLACK = (0, 0, 0)
-GREY = (128, 128, 128)
+from src.chessgame import ChessGame
+from src.piece import Piece, PieceType, PieceColor
+from assets import ImageCache
+from render.colors import WHITE, RED, GREEN
 
 class PieceImage:
     def __init__(self, pos, p_type, p_color, square_size):
@@ -41,8 +38,11 @@ class BoardImage:
 
         self.square_size = square_size
         self.pieces = [PieceImage.from_piece_obj(piece,square_size) for piece in game.board.board.flat if piece]
-        self.prom_pieces = [PieceImage.from_piece_obj(p_type(game.turn,(0+i,0)),square_size) 
-                                       for (p_type,i) in zip([Queen,Rook,Bishop,Knight],range(4))]
+        self.white_prom_pieces = [PieceImage((1,1),p_type,PieceColor.WHITE,square_size) 
+                             for p_type in [PieceType.QUEEN,PieceType.ROOK,PieceType.LIGHT_BISHOP,PieceType.KNIGHT]]
+        self.black_prom_pieces = [PieceImage((1,1),p_type,PieceColor.BLACK,square_size) 
+                             for p_type in [PieceType.QUEEN,PieceType.ROOK,PieceType.LIGHT_BISHOP,PieceType.KNIGHT]]
+
 
     def draw_prom_pieces(self, surface: pygame.Surface, r: int, c: int):
         """
@@ -59,7 +59,7 @@ class BoardImage:
                              WHITE,
                              Rect((180 + 80*c,130 + 80*(r+aux*i)),self.square_size))
 
-        for i, piece in enumerate(self.prom_pieces):
+        for i, piece in enumerate(self.white_prom_pieces if r == 0 else self.black_prom_pieces):
             piece.update_position(r+aux*i,c,self.square_size)
             piece.draw(surface)
 

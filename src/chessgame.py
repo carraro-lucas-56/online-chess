@@ -1,8 +1,18 @@
-from src.chessboard import *
-from src.piece import *
-from src.player import *
+from __future__ import annotations
+
 import time
 import random
+from enum import Enum
+from typing import TYPE_CHECKING
+from dataclasses import dataclass
+
+from src.piece import PieceType, PieceState, PieceColor, MoveType, PIECE_VALUES
+from src.chessboard import ChessBoard
+from src.player import Player
+
+if TYPE_CHECKING:
+    import numpy as np
+    from src.piece import Piece, Move
 
 class GameState(Enum):
     IN_PROGRESS = 1
@@ -146,9 +156,9 @@ class ChessGame():
             case MoveType.PROMOTION_NORMAL | MoveType.PROMOTION_CAPTURE:
                 p1.add_piece(move.promotion)
                 p1.remove_piece(PieceType.PAWN)
-                p1.score += Piece.piece_value_dict[move.promotion]-1
+                p1.score += PIECE_VALUES[move.promotion]-1
             case MoveType.CAPTURE | MoveType.ENPASSANT:
-                p1.score += Piece.piece_value_dict[piece_captured.type]
+                p1.score += PIECE_VALUES[piece_captured.type]
 
     def _undo_player_data (self, move: Move, piece_captured: Piece | None = None) -> None:  
 
@@ -163,11 +173,11 @@ class ChessGame():
             case MoveType.PROMOTION_NORMAL | MoveType.PROMOTION_CAPTURE:
                 p1.add_piece(PieceType.PAWN)
                 p1.remove_piece(move.promotion)
-                p1.score -= Piece.piece_value_dict[move.promotion]-1
+                p1.score -= PIECE_VALUES[move.promotion]-1
             case MoveType.CAPTURE | MoveType.ENPASSANT:
-                p1.score -= Piece.piece_value_dict[piece_captured.type]
+                p1.score -= PIECE_VALUES[piece_captured.type]
 
-    def set_initial_setup(self):
+    def set_initial_setup(self) -> None:
         self.board.reset()
         self.white.reset(time_left=600)
         self.black.reset(time_left=600)
@@ -179,12 +189,12 @@ class ChessGame():
         self.state = GameState.READY_TO_START
         self.deadMoves = 0
 
-    def start_game(self):
+    def start_game(self) -> None:
         if self.state != GameState.READY_TO_START:
             self.set_initial_setup()
         self.state = GameState.IN_PROGRESS
 
-    def toggle_robot_move(self):
+    def toggle_robot_move(self) -> None:
         if not self.validMoves:
             return 
 

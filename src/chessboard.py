@@ -107,7 +107,7 @@ class ChessBoard():
                 piece = self.board[r][y]
 
                 # There's no pawn to perform the en passant capture
-                if(not piece or piece.type != PieceType.PAWN):
+                if(not piece or piece.type != PieceType.PAWN or piece.color != turn):
                     continue
 
                 enpassant_cap = Move((r,y,r+aux,c),MoveType.ENPASSANT)

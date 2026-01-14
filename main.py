@@ -8,7 +8,7 @@ from src.piece import PieceType, PieceColor, is_light_square
 from render.board_view import BoardImage, PieceImage
 from render.colors import WHITE, GREY
 from render.hud import Hud
-from src.AI import min_max_root
+from src.AI import alpha_beta_root
 
 load_dotenv()
 ROOT_DIR = os.getenv("ROOT_DIR")
@@ -45,8 +45,10 @@ def coord_to_piece(col: int, x: int, y: int, turn: PieceColor) -> PieceType | No
     return None
 
 def toggle_robot_move(game: ChessGame):
-    move = min_max_root(game)
+    move = alpha_beta_root(game,False)
     game.play_move(*move.coords,move.promotion)
+    print(move.coords)
+
 
 #Initializing 
 pygame.init()

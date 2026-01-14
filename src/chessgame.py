@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import time
-import random
 from enum import Enum
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
@@ -30,6 +28,7 @@ class GameSnapshot:
     board: np.ndarray 
     deadMoves: int = 0
     lastMove: Move = None
+
 
 class GameError(Exception):
     pass
@@ -131,7 +130,7 @@ class ChessGame():
         elif player.time_left <= 0:
             self.state = GameState.TIMEOUT
 
-    def _update_player_data(self,move: Move, turn_start_time: float) -> None:
+    def _update_player_data(self,move: Move) -> None:
         """
         Updates players's data based on the provided move.
         
@@ -141,8 +140,6 @@ class ChessGame():
 
         (p1,p2) = ((self.white,self.black) if self.turn == PieceColor.WHITE 
                                            else (self.black,self.white))
-
-        # p1.time_left = p1.time_left - (time.monotonic() - turn_start_time)
 
         piece_captured = (self.board.board[move.coords[0]][move.coords[3]] 
                           if move.type == MoveType.ENPASSANT 
@@ -194,19 +191,7 @@ class ChessGame():
             self.set_initial_setup()
         self.state = GameState.IN_PROGRESS
 
-    def toggle_robot_move(self) -> None:
-        if not self.validMoves:
-            return 
-
-        random_integer = random.randint(0, len(self.validMoves)-1)
-        move = self.validMoves[random_integer]
-
-        if move.type == MoveType.PROMOTION_CAPTURE or move.type == MoveType.PROMOTION_NORMAL:
-            self.play_move(*move.coords,move.promotion)
-        else:
-            self.play_move(*move.coords)
-
-    def play_move(self, x: int, y: int, x2: int, y2: int, prom_piece: PieceType | None = None) -> None:
+    def play_move(self, x: int, y: int, x2: int, y2: int, prom_piece: PieceType | None = None, save=True) -> Move:
         """
         Validates and applies a move given by board coordinates.
 
@@ -215,8 +200,6 @@ class ChessGame():
         the game state.
         """
         
-        turn_start_time = time.monotonic()
-
         if self.state != GameState.IN_PROGRESS:
             raise GameNotInProgress
 
@@ -232,7 +215,7 @@ class ChessGame():
         else:
             move = moves[0]
 
-        self._update_player_data(move,turn_start_time)
+        self._update_player_data(move)
         
         # Update 75-move rule counter
         self.deadMoves = (self.deadMoves + 1 
@@ -240,18 +223,18 @@ class ChessGame():
                           else 0)
         
         self.board.apply_move(move)
-        
         self._change_turn()
+        
+        self.validMoves = self.board.gen_valid_moves(self.turn,move)
         self._update_state()
 
-        self.validMoves = self.board.gen_valid_moves(self.turn,move)
-
-        self.stateHistory.append(GameSnapshot(lastMove=move,
+        if save:
+            self.stateHistory.append(GameSnapshot(lastMove=move,
                                                   deadMoves=self.deadMoves,
                                                   validMoves=self.validMoves,
                                                   board=self.board.board.copy(),
                                                   state=self.state))
-        
+
     def unplay_move(self, pop: bool=False) -> None:
         """
         Undo the last move done in the game.
@@ -291,6 +274,28 @@ class ChessGame():
 
         if pop:
             self.stateHistory.pop()
+
+    def unplay_move_inplace(self,
+                            lastMove: Move, 
+                            piece_captured: Piece,
+                            piece_prev_state: PieceState,
+                            prev_valid_moves: list[Move],
+                            prev_dead_moves_cnt: int,
+                            prev_state: GameState
+                            ):
+        
+        self.board.undo_move(lastMove,piece_captured,piece_prev_state)
+
+        self._change_turn()
+
+        self._undo_player_data(lastMove,piece_captured)
+
+        self.validMoves = prev_valid_moves
+
+        self.deadMoves = prev_dead_moves_cnt
+
+        self.state = prev_state
+
 
     def can_toggle_promotion(self, x: int, y: int, x2: int, y2: int) -> bool:
         """

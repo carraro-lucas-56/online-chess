@@ -8,6 +8,7 @@ from src.piece import PieceType, PieceColor, is_light_square
 from render.board_view import BoardImage, PieceImage
 from render.colors import WHITE, GREY
 from render.hud import Hud
+from src.AI import min_max_root
 
 load_dotenv()
 ROOT_DIR = os.getenv("ROOT_DIR")
@@ -42,6 +43,10 @@ def coord_to_piece(col: int, x: int, y: int, turn: PieceColor) -> PieceType | No
         return PieceType.KNIGHT
 
     return None
+
+def toggle_robot_move(game: ChessGame):
+    move = min_max_root(game)
+    game.play_move(*move.coords,move.promotion)
 
 #Initializing 
 pygame.init()
@@ -96,15 +101,17 @@ while running:
     else:
         game.black.time_left -= dt
 
-    boardImage.draw(DISPLAYSURF,highlighted_squares=(r,c))
-    hud.draw(DISPLAYSURF)
-
     # Draw promotion 'animation' if there's a promotion happening
     if prom:
         try:
             boardImage.draw_prom_pieces(DISPLAYSURF,r2,c2)
         except:
             pass
+
+    if game.turn == PieceColor.BLACK:
+        toggle_robot_move(game)
+        boardImage.pieces = [PieceImage.from_piece_obj(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
+        r = c = r2 = c2 = None
 
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -157,6 +164,9 @@ while running:
                 prom = False
                 prom_piece = None
             r = c = r2 = c2 = None
+
+    boardImage.draw(DISPLAYSURF,highlighted_squares=(r,c))
+    hud.draw(DISPLAYSURF)
 
     pygame.display.update()
     FramePerSec.tick(FPS)

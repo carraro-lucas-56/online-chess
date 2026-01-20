@@ -4,9 +4,9 @@ from enum import Enum
 from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
-from src.piece import PieceType, PieceState, PieceColor, MoveType, PIECE_VALUES
-from src.chessboard import ChessBoard
-from src.player import Player
+from .piece import PieceType, PieceState, PieceColor, MoveType, PIECE_VALUES
+from .chessboard import ChessBoard
+from .player import Player
 
 if TYPE_CHECKING:
     import numpy as np
@@ -25,10 +25,11 @@ class GameState(Enum):
 class GameSnapshot:
     validMoves: list[Move]
     state: GameState 
-    board: np.ndarray 
+    board: np.ndarray | None
     deadMoves: int = 0
+    piece_prev_state: PieceState = None
+    piece_captured: Piece | None = None
     lastMove: Move = None
-
 
 class GameError(Exception):
     pass
@@ -48,9 +49,10 @@ class ChessGame():
         self.black = Player(PieceColor.BLACK,time_left=600,robot=True)
         self.validMoves = self.board.gen_valid_moves(self.turn) # List with all the valid moves current available for the colos who's playing in this turn 
         self.stateHistory = [GameSnapshot(validMoves=self.validMoves,
-                                              state=self.state,
-                                              board=self.board.board)]
+                                          state=self.state,
+                                          board=self.board.board)]
         self.deadMoves = 0   
+        self.totalMoves = 1
 
     def _change_turn(self) -> None:
         self.turn = PieceColor.WHITE if self.turn == PieceColor.BLACK else PieceColor.BLACK
@@ -185,13 +187,14 @@ class ChessGame():
                                           board=self.board.board)]
         self.state = GameState.READY_TO_START
         self.deadMoves = 0
+        self.deadMoves = 1
 
     def start_game(self) -> None:
         if self.state != GameState.READY_TO_START:
             self.set_initial_setup()
         self.state = GameState.IN_PROGRESS
 
-    def play_move(self, x: int, y: int, x2: int, y2: int, prom_piece: PieceType | None = None, save=True) -> Move:
+    def play_move(self, x: int, y: int, x2: int, y2: int, prom_piece: PieceType | None = None, search_mode=False) -> Move:
         """
         Validates and applies a move given by board coordinates.
 
@@ -215,6 +218,8 @@ class ChessGame():
         else:
             move = moves[0]
 
+        piece_prev_state = self.board.board[move.coords[0]][move.coords[1]].state
+            
         self._update_player_data(move)
         
         # Update 75-move rule counter
@@ -222,20 +227,25 @@ class ChessGame():
                           if self.board.board[x][y].type != PieceType.PAWN and move.type != MoveType.CAPTURE
                           else 0)
         
-        self.board.apply_move(move)
+        if self.turn == PieceColor.BLACK:
+            self.totalMoves += 1
+
+        piece_captured = self.board.apply_move(move)
         self._change_turn()
         
         self.validMoves = self.board.gen_valid_moves(self.turn,move)
         self._update_state()
 
-        if save:
-            self.stateHistory.append(GameSnapshot(lastMove=move,
-                                                  deadMoves=self.deadMoves,
-                                                  validMoves=self.validMoves,
-                                                  board=self.board.board.copy(),
-                                                  state=self.state))
+        
+        self.stateHistory.append(GameSnapshot(lastMove=move,
+                                              deadMoves=self.deadMoves,
+                                              validMoves=self.validMoves,
+                                              board=None if search_mode else self.board.board.copy(),
+                                              state=self.state,
+                                              piece_captured=piece_captured,
+                                              piece_prev_state=piece_prev_state))
 
-    def unplay_move(self, pop: bool=False) -> None:
+    def unplay_move(self, pop: bool=True) -> None:
         """
         Undo the last move done in the game.
         """
@@ -249,22 +259,15 @@ class ChessGame():
         prev_state = self.stateHistory[-2]
 
         move = self.stateHistory[-1].lastMove
-        (x,y,x2,y2) = move.coords
-        
-        piece_old_state = PieceState.MOVED
-        piece_captured = None
+        piece_old_state = self.stateHistory[-1].piece_prev_state
+        piece_captured  = self.stateHistory[-1].piece_captured
 
-        match move.type:
-            case MoveType.CAPTURE | MoveType.PROMOTION_CAPTURE:
-                piece_captured = prev_state.board[x2][y2]
-            case  MoveType.ENPASSANT:
-                piece_captured = prev_state.board[x][y2] 
-            case  MoveType.CASTLE:
-                piece_old_state = PieceState.NOT_MOVED
-        
         self.board.undo_move(move,piece_captured,piece_old_state)
 
         self.deadMoves = prev_state.deadMoves
+
+        if self.turn == PieceColor.BLACK:
+            self.totalMoves -= 1
 
         self.validMoves = prev_state.validMoves
         
@@ -292,27 +295,9 @@ class ChessGame():
 
         self.validMoves = prev_valid_moves
 
+        if self.turn == PieceColor.BLACK:
+            self.totalMoves -= 1
+
         self.deadMoves = prev_dead_moves_cnt
 
         self.state = prev_state
-
-
-    def can_toggle_promotion(self, x: int, y: int, x2: int, y2: int) -> bool:
-        """
-        Recives the origin coord from a move and checks if the move can toggle.
-
-        a promotion, i.e the coord has a pawn that's one rank away from promoting. 
-        """
-        if x < 0 or x > 7 or y < 0 or y > 7:
-            return False
-        
-        elif not next((move for move in self.validMoves if move.coords == (x,y,x2,y2)), None):
-            return False
-
-        row = 1 if self.turn == PieceColor.WHITE else 6
-
-        return (x == row 
-                and self.board.board[x][y] 
-                and self.board.board[x][y].color == self.turn 
-                and self.board.board[x][y].type == PieceType.PAWN) 
-    

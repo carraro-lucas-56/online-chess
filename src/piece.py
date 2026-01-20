@@ -2,6 +2,7 @@ from enum import Enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
+from Utils.utils import is_light_square, in_bound
 
 class PieceColor(Enum):
     WHITE = 1
@@ -34,9 +35,6 @@ class Move:
     type: MoveType
     promotion: Optional[PieceType] = None
 
-def is_light_square(t: tuple[int,int]) -> bool:
-    return (t[0]+t[1]) % 2 == 0
-
 PIECE_VALUES: dict[PieceType, int] = {
     PieceType.PAWN: 1,
     PieceType.KNIGHT: 3,
@@ -47,7 +45,6 @@ PIECE_VALUES: dict[PieceType, int] = {
     PieceType.KING: 1000,
 }
 
-
 class Piece(ABC):
     
     def __init__(self,
@@ -56,7 +53,6 @@ class Piece(ABC):
                  position: tuple[int,int]):
         self.__color = color
         self.__type = p_type
-        self.__value = PIECE_VALUES[p_type]
         self.state = PieceState.NOT_MOVED
         self.position = position
 
@@ -65,22 +61,11 @@ class Piece(ABC):
         return self.__color
 
     @property
-    def value(self):
-        return self.__value
-
-    @property
     def type(self):
         return self.__type
 
     def update_position(self, new_position: tuple[int,int]) -> None:
         self.position = new_position
-
-    @staticmethod
-    def _in_bound(x: int, y: int) -> bool:
-        """
-        helper function to check if a coordinate in valid
-        """
-        return x >= 0 and y >= 0 and x <= 7 and y <= 7
 
     @abstractmethod
     def get_moves(self, board) -> list[Move]:
@@ -112,17 +97,17 @@ class Piece(ABC):
         (dr,dc) = dirs[index]
         (x,y) = (dr,dc)
         
-        # explore each diagonal one by one
+        # explore each direction one by one
         while(index < len(dirs)):
 
             # checking if we reached the end of the board
-            if(not self._in_bound(r+x,c+y)):
-                # if true change the diagonal
+            if(not in_bound(r+x,c+y)):
+                # if true change the direction
                 index += 1
                 (dr,dc) = dirs[index%len(dirs)]
                 x, y = dr, dc
 
-            # if the square is empty, keep exploring this diagonal
+            # if the square is empty, keep exploring this directio
             elif(board[r+x][c+y] is None):
                 moves.append(Move((r,c,r+x,c+y),MoveType.NORMAL))
                 x += dr
@@ -134,7 +119,7 @@ class Piece(ABC):
                 if board[r+x][c+y].color != self.color: # and type(board[r+x][c+y] != King):
                     moves.append(Move((r,c,r+x,c+y),MoveType.CAPTURE)) 
 
-                # change the diagonal we're exploring
+                # change the direction we're exploring
                 index += 1
                 (dr,dc) = dirs[index%len(dirs)]
                 x, y = dr, dc
@@ -155,7 +140,7 @@ class Pawn(Piece):
         aux = 1 if self.color == PieceColor.BLACK else -1
         (r,c) = self.position
 
-        return [(x,y) for (x,y) in [(r+aux,c-1),(r+aux,c+1)] if self._in_bound(x,y)]
+        return [(x,y) for (x,y) in [(r+aux,c-1),(r+aux,c+1)] if in_bound(x,y)]
 
     @classmethod
     def prom_pieces(cls,t: tuple[int,int]) -> list[PieceType]:
@@ -178,21 +163,21 @@ class Pawn(Piece):
         aux = 1 if self.color == PieceColor.BLACK else -1
 
         # Checks the condtions to promote with a capture in the left up square
-        if (self._in_bound(r+aux,c-1) 
+        if (in_bound(r+aux,c-1) 
             and board[r+aux][c-1] 
             and board[r+aux][c-1].color != self.color):
             moves.extend([Move((r,c,r+aux,c-1,),MoveType.PROMOTION_CAPTURE,p_type) 
                           for p_type in self.prom_pieces((r+aux,c-1))])
 
         # Checks the condtions to promote with a capture in the right up square
-        if (self._in_bound(r+aux,c+1) 
+        if (in_bound(r+aux,c+1) 
             and board[r+aux][c+1] 
             and board[r+aux][c+1].color != self.color):
             moves.extend([Move((r,c,r+aux,c+1,),MoveType.PROMOTION_CAPTURE,p_type) 
                           for p_type in self.prom_pieces((r+aux,c+1))])
 
         # Checks if we can go one square up
-        if self._in_bound(r+aux,c) and board[r+aux][c] is None:
+        if in_bound(r+aux,c) and board[r+aux][c] is None:
             moves.extend([Move((r,c,r+aux,c,),MoveType.PROMOTION_NORMAL,p_type) 
                           for p_type in self.prom_pieces((r+aux,c))])
             
@@ -211,13 +196,13 @@ class Pawn(Piece):
         aux = 1 if self.color == PieceColor.BLACK else -1
 
         # Checks the condtions to make a capture in the left up square
-        if (self._in_bound(r+aux,c-1) 
+        if (in_bound(r+aux,c-1) 
             and board[r+aux][c-1] 
             and board[r+aux][c-1].color != self.color):
             moves.append(Move((r,c,r+aux,c-1,),MoveType.CAPTURE))
 
         # Checks the condtions to make a capture in the right up square
-        if (self._in_bound(r+aux,c+1) 
+        if (in_bound(r+aux,c+1) 
             and board[r+aux][c+1] 
             and board[r+aux][c+1].color != self.color):
             moves.append(Move((r,c,r+aux,c+1),MoveType.CAPTURE))
@@ -251,7 +236,7 @@ class Knight(Piece):
         ]
         
         for (x,y) in coords:
-            if not self._in_bound(x,y):
+            if not in_bound(x,y):
                 continue 
 
             # Checks if the destination square is empty or has an opposing piece
@@ -314,7 +299,7 @@ class King(Piece):
         (r,c) = self.position
 
         for (dr,dc) in King.dirs:
-            if(not self._in_bound(r+dr,c+dc)):
+            if(not in_bound(r+dr,c+dc)):
                 continue 
         
             # checks if the destination square is empty or has an opposing piece

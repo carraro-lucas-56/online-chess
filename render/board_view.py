@@ -21,15 +21,11 @@ class PieceImage:
         r,c = piece.position
         return cls((180 + 80*c, 130 + 80*r),piece.type,piece.color,square_size)
 
-    def draw(self, surface):
+    def draw(self, surface: pygame.Surface):
         surface.blit(self.image, self.rect)
 
     def update_position(self,r: int, c: int, square_size):
         self.rect = Rect((180 + 80*c,130 + 80*r),square_size)
-
-
-class InvalidPromotionSquare(Exception):
-    pass
 
 class BoardImage:
     def __init__(self, game: ChessGame, square_size: tuple[int,int]):
@@ -50,7 +46,7 @@ class BoardImage:
         and display the pieces that the player can promote to.
         """
         if r != 0 and r != 7:
-            raise InvalidPromotionSquare
+            return
 
         aux = -1 if r == 7 else 1
 

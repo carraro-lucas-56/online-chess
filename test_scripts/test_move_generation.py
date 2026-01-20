@@ -1,5 +1,12 @@
-from test_scripts.Utils import *
-import json
+from test_scripts.Utils import fen_to_chessgame, moveObj_to_moveName
+
+import os, json
+from dotenv import load_dotenv
+
+
+load_dotenv()
+ROOT_DIR = os.getenv("ROOT_DIR")
+
 
 """
 This script is a test harness for validating chess move generation and
@@ -33,7 +40,8 @@ def run_testcase(file_path):
 
     for i, test in enumerate(data_dict["testCases"]):
         fen = test["start"]["fen"]
-        board, move_objs = fen_to_chessboard(fen)
+        game = fen_to_chessgame(fen)
+        board, move_objs = game.board, game.validMoves
 
         # Moves that deliveries a check (i.e moves that end wiht '+' ) have the '+' character removed
         expected = [item["move"] if (item["move"][-1] != '+' and item["move"][-1] != '#') else item["move"][:-1] for item in test["expected"]]
@@ -59,9 +67,10 @@ testcases = ['famous',
              'promotions',
              'castling']
 
-for i, test in enumerate(testcases):
-    print(50*'-')
-    print(f'Testcase {i+1} -> {test}.json')
-    print(50*'-')
-    run_testcase(f'{ROOT_DIR}/test_scripts/testcases/{test}.json')
+if __name__=="__main__":
+    for i, test in enumerate(testcases):
+        print(50*'-')
+        print(f'Testcase {i+1} -> {test}.json')
+        print(50*'-')
+        run_testcase(f'{ROOT_DIR}/test_scripts/testcases/{test}.json')
     

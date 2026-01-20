@@ -1,6 +1,5 @@
 import numpy as np
-from enum import Enum
-from src.piece import (Piece, PieceState, PieceType, PieceColor,  
+from .piece import (Piece, PieceState, PieceType, PieceColor,  
                        Move, MoveType, create_piece)
 
 class ChessBoard():
@@ -206,7 +205,6 @@ class ChessBoard():
             self.board[x][r_col] = self.board[x][y2+aux]
             self.board[x][r_col].position = (x,r_col)
             self.board[x][r_col].state = PieceState.NOT_MOVED
-            self.board[x][y2+aux].state = PieceState.NOT_MOVED
             self.board[x][y2+aux] = None
             
 

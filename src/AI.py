@@ -1,23 +1,22 @@
-from src.piece import Move, PieceColor, MoveType
-from src.chessgame import ChessGame, GameState
+from .piece import Move, PieceColor, MoveType, PieceType
+from .chessgame import ChessGame, GameState
 
 MAX_DEPTH = 3
 
+def move_score(move):
+    if move.type == MoveType.CASTLE:
+        return 1500
+    if move.type == MoveType.CAPTURE or move.type == MoveType.PROMOTION_CAPTURE: 
+        return 1000
+    return 0
+
 def alpha_beta_root(game: ChessGame,  isMax: bool, alpha = -100000, beta = 1000000) -> Move:
     bestMove = None 
-    
-    for move in game.validMoves:
-        piece_prev_state = game.board.board[move.coords[0]][move.coords[1]].state
 
-        piece_captured = (game.board.board[move.coords[2]][move.coords[3]] 
-                          if move.type != MoveType.ENPASSANT 
-                          else game.board.board[move.coords[0]][move.coords[3]]) 
+    moves = sorted(game.validMoves, key=move_score, reverse=True)
 
-        prev_dead_moves_cnt = game.deadMoves
-        prev_valid_moves = game.validMoves
-        prev_state = game.state
-
-        game.play_move(*move.coords,save=False)
+    for move in moves:
+        game.play_move(*move.coords,move.promotion,search_mode=True) #,save=False)
         score = alpha_beta(game, alpha, beta, 1, not isMax)
 
         if isMax:
@@ -29,36 +28,22 @@ def alpha_beta_root(game: ChessGame,  isMax: bool, alpha = -100000, beta = 10000
                 beta = score
                 bestMove = move
 
-        game.unplay_move_inplace(lastMove=move,
-                                 piece_captured=piece_captured,
-                                 piece_prev_state=piece_prev_state,
-                                 prev_valid_moves=prev_valid_moves,
-                                 prev_dead_moves_cnt=prev_dead_moves_cnt,
-                                 prev_state=prev_state)
+        game.unplay_move()
 
         if alpha >= beta:
             break
 
     return bestMove
 
-
 def alpha_beta(game: ChessGame, alpha: int, beta: int, depth: int, isMax: bool) -> int: 
     
     if depth == MAX_DEPTH or game.state != GameState.IN_PROGRESS:
         return eval(game)
-    
-    for move in game.validMoves:
-        piece_prev_state = game.board.board[move.coords[0]][move.coords[1]].state
-    
-        piece_captured = (game.board.board[move.coords[2]][move.coords[3]] 
-                        if move.type != MoveType.ENPASSANT 
-                        else game.board.board[move.coords[0]][move.coords[3]]) 
-    
-        prev_dead_moves_cnt = game.deadMoves
-        prev_valid_moves = game.validMoves
-        prev_state = game.state
 
-        game.play_move(*move.coords,save=False)
+    moves = sorted(game.validMoves, key=move_score, reverse=True)
+
+    for move in moves:
+        game.play_move(*move.coords,move.promotion,search_mode=True) # ,save=False)    
         score = alpha_beta(game, alpha, beta, depth+1, not isMax)
 
         if isMax:
@@ -68,26 +53,27 @@ def alpha_beta(game: ChessGame, alpha: int, beta: int, depth: int, isMax: bool) 
             if score < beta:
                 beta = score 
 
-        game.unplay_move_inplace(lastMove=move,
-                                 piece_captured=piece_captured,
-                                 piece_prev_state=piece_prev_state,
-                                 prev_valid_moves=prev_valid_moves,
-                                 prev_dead_moves_cnt=prev_dead_moves_cnt,
-                                 prev_state=prev_state)
-
+        game.unplay_move()
+        
         if alpha >= beta:
             break
-
+        
     return alpha if isMax else beta
 
-
 def eval(game: ChessGame) -> int:
-    material_advantage =  game.white.score - game.black.score
 
-    match game.state:
-        case GameState.IN_PROGRESS:
-            return material_advantage
-        case GameState.CHACKMATE:
-            return 10000 if game.turn == PieceColor.BLACK else -10000
-        case _:
-            return 0
+    if game.state == GameState.CHACKMATE:
+        return 10000 if game.turn == PieceColor.BLACK else -10000
+    elif game.state != GameState.IN_PROGRESS:
+        return 0
+
+    material_advantage = (game.white.score - game.black.score)*100
+    mobility = len(game.validMoves)
+    isChecked = 30 if game.board.is_checked(game.turn) else 0
+
+    # score = material_advantage - mobility
+    score = (material_advantage + mobility - isChecked 
+             if game.turn == PieceColor.WHITE 
+             else material_advantage - mobility + isChecked)
+    
+    return score    

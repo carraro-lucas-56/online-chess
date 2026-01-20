@@ -78,4 +78,11 @@ class Hud:
         
         self.white_pieces_capt.draw(surface,self.game.white.piecesCaptured)
         self.black_pieces_capt.draw(surface,self.game.black.piecesCaptured)
+
+    def draw_game_result(self,suface: pygame.Surface, square_size: int):
+        text = self.game.state.name
+        font = pygame.font.Font(None, 18)
+
+        img = font.render(text, True, WHITE)
+        suface.blit(img, (180+8*square_size+10,500))
             

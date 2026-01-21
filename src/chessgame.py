@@ -1,16 +1,9 @@
-from __future__ import annotations
-
 from enum import Enum
-from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
-from .piece import PieceType, PieceState, PieceColor, MoveType, PIECE_VALUES
+from .piece import Piece, PieceType, PieceColor, Move, MoveType, PIECE_VALUES
 from .chessboard import ChessBoard
 from .player import Player
-
-if TYPE_CHECKING:
-    import numpy as np
-    from src.piece import Piece, Move
 
 class GameState(Enum):
     IN_PROGRESS = 1
@@ -24,10 +17,12 @@ class GameState(Enum):
 @dataclass(frozen=True)
 class GameSnapshot:
     validMoves: list[Move]
-    state: GameState 
-    board: np.ndarray | None
+    state: GameState
+    BK: bool = True
+    BQ: bool = True
+    WK: bool = True
+    WQ: bool = True 
     deadMoves: int = 0
-    piece_prev_state: PieceState = None
     piece_captured: Piece | None = None
     lastMove: Move = None
 
@@ -44,18 +39,52 @@ class ChessGame():
     def __init__(self):
         self.turn = PieceColor.WHITE
         self.board = ChessBoard()
-        self.state = GameState.READY_TO_START
         self.white = Player(PieceColor.WHITE,time_left=600)
         self.black = Player(PieceColor.BLACK,time_left=600,robot=True)
-        self.validMoves = self.board.gen_valid_moves(self.turn) # List with all the valid moves current available for the colos who's playing in this turn 
-        self.stateHistory = [GameSnapshot(validMoves=self.validMoves,
-                                          state=self.state,
-                                          board=self.board.board)]
+
+        # List with all the valid moves current available for the colos who's playing in this turn
+        self.validMoves = self.board.gen_valid_moves(self.turn,True,True)
+          
+        # castling rights
+        self.BK = True
+        self.BQ = True
+        self.WK = True
+        self.WQ = True
+
+        # move count
         self.deadMoves = 0   
         self.totalMoves = 1
 
+        self.state = GameState.READY_TO_START
+        self.snapshots = [GameSnapshot(validMoves=self.validMoves,state=self.state)]
+
+    def set_initial_setup(self) -> None:
+        self.board.reset()
+        self.white.reset(time_left=600)
+        self.black.reset(time_left=600)
+        self.turn = PieceColor.WHITE
+        self.validMoves = self.board.gen_valid_moves(self.turn)
+        self.snapshots = [GameSnapshot(validMoves=self.validMoves,
+                                          state=self.state)]
+        self.state = GameState.READY_TO_START
+        self.BQ = True
+        self.BK = True
+        self.WQ = True
+        self.WK = True
+        self.deadMoves = 0
+        self.deadMoves = 1
+
+    def start_game(self) -> None:
+        if self.state != GameState.READY_TO_START:
+            self.set_initial_setup()
+        self.state = GameState.IN_PROGRESS
+
     def _change_turn(self) -> None:
         self.turn = PieceColor.WHITE if self.turn == PieceColor.BLACK else PieceColor.BLACK
+
+# =======================================================
+# ===== HELPER FUNCTIONS TO UPDATE GAME ATTRIBUTES ======
+# =======================================================
 
     def _insufficient_material(self) -> bool:
         """
@@ -114,7 +143,7 @@ class ChessGame():
 
         return False
 
-    def _update_state(self) -> None:
+    def _update_state(self, search_mode: bool = False) -> None:
         """
         Functions that checks if the game ended.
         """
@@ -125,6 +154,9 @@ class ChessGame():
             self.state = (GameState.CHACKMATE 
                           if self.board.is_checked(self.turn)
                           else GameState.STALEMATE)
+        if search_mode:
+            return    
+
         elif self.deadMoves == 75:
             self.state = GameState.DRAW_BY_75_MOVE_RULE
         elif self._insufficient_material():
@@ -176,23 +208,47 @@ class ChessGame():
             case MoveType.CAPTURE | MoveType.ENPASSANT:
                 p1.score -= PIECE_VALUES[piece_captured.type]
 
-    def set_initial_setup(self) -> None:
-        self.board.reset()
-        self.white.reset(time_left=600)
-        self.black.reset(time_left=600)
-        self.turn = PieceColor.WHITE
-        self.validMoves = self.board.gen_valid_moves(self.turn)
-        self.stateHistory = [GameSnapshot(validMoves=self.validMoves,
-                                          state=self.state,
-                                          board=self.board.board)]
-        self.state = GameState.READY_TO_START
-        self.deadMoves = 0
-        self.deadMoves = 1
+    def _update_castling_rights(self, move: Move) -> None:
+        """
+        Updates castlings rights based in the provided move.
 
-    def start_game(self) -> None:
-        if self.state != GameState.READY_TO_START:
-            self.set_initial_setup()
-        self.state = GameState.IN_PROGRESS
+        Checks if the current player is moving the  
+        king/rook or capturing a opposing rook.
+        """
+        (x,y,x2,y2) = move.coords
+        piece = self.board.board[x][y]
+
+        if self.turn == PieceColor.WHITE:
+            if (self.WK and (piece.type == PieceType.KING or (piece.type == PieceType.ROOK and y == 7))):
+                self.WK = False
+
+            if (self.WQ and (piece.type == PieceType.KING or (piece.type == PieceType.ROOK and y == 0))):
+                self.WQ = False
+
+            # Case when we are capturing the opponent's rook
+            if (self.BK and (x2,y2) == (0,7)):
+                self.BK = False
+            
+            elif (self.BK and (x2,y2) == (0,0)):
+                self.BQ = False
+
+        else:
+            if (self.BK and (piece.type == PieceType.KING or (piece.type == PieceType.ROOK and y == 7))):
+                self.BK = False
+
+            if (self.BQ and (piece.type == PieceType.KING or (piece.type == PieceType.ROOK and y == 0))):
+                self.BQ = False
+
+            # Case when we are capturing the opponent's rook
+            if (self.WK and (x2,y2) == (7,7)):
+                self.WK = False
+            
+            elif (self.WK and (x2,y2) == (7,0)):
+                self.WQ = False
+
+# ========================================================
+# ===== FUNCTIONS PERFORM AND UNDO MOVES IN THE GAME =====
+# ========================================================
 
     def play_move(self, x: int, y: int, x2: int, y2: int, prom_piece: PieceType | None = None, search_mode=False) -> Move:
         """
@@ -206,14 +262,14 @@ class ChessGame():
         if self.state != GameState.IN_PROGRESS:
             raise GameNotInProgress
 
-        # Checking which moves matches the given coordinates
+        # Checking which move matches the given coordinates
         move = next((m for m in self.validMoves if m.coords == (x,y,x2,y2) and m.promotion == prom_piece),None)
 
         if move is None:
             raise InvalidMove
 
-        piece_prev_state = self.board.board[move.coords[0]][move.coords[1]].state
-            
+        self._update_castling_rights(move)            
+        
         self._update_player_data(move)
         
         # Update 75-move rule counter
@@ -225,37 +281,49 @@ class ChessGame():
             self.totalMoves += 1
 
         piece_captured = self.board.apply_move(move)
+
         self._change_turn()
         
-        self.validMoves = self.board.gen_valid_moves(self.turn,move)
-        self._update_state()
+        (CK, CQ) = (self.BK,self.BQ) if self.turn == PieceColor.BLACK else (self.WK,self.WQ)
 
-        self.stateHistory.append(GameSnapshot(lastMove=move,
-                                              deadMoves=self.deadMoves,
-                                              validMoves=self.validMoves,
-                                              board=None if search_mode else self.board.board.copy(),
-                                              state=self.state,
-                                              piece_captured=piece_captured,
-                                              piece_prev_state=piece_prev_state))
+        self.validMoves = self.board.gen_valid_moves(self.turn,CK,CQ,move)
+
+        # Checks if the game ended
+        self._update_state(search_mode=search_mode)
+
+        self.snapshots.append(GameSnapshot(lastMove=move,
+                                           deadMoves=self.deadMoves,
+                                           validMoves=self.validMoves,
+                                           state=self.state,
+                                           BK=self.BK,
+                                           BQ=self.BQ,
+                                           WK=self.WK,
+                                           WQ=self.WQ,
+                                           piece_captured=piece_captured))
 
     def unplay_move(self, pop: bool=True) -> None:
         """
-        Undo the last move done in the game.
+        Restore the game overall state back to how it was before the last move played.
         """
 
         # there's no more moves to undo
-        if len(self.stateHistory) < 2:
+        if len(self.snapshots) < 2:
             return 
 
         self._change_turn()
         
-        prev_state = self.stateHistory[-2]
+        prev_state = self.snapshots[-2]
 
-        move = self.stateHistory[-1].lastMove
-        piece_old_state = self.stateHistory[-1].piece_prev_state
-        piece_captured  = self.stateHistory[-1].piece_captured
+        self.BK = prev_state.BK 
+        self.BQ = prev_state.BQ 
+        self.WK = prev_state.WK 
+        self.WQ = prev_state.WQ 
 
-        self.board.undo_move(move,piece_captured,piece_old_state)
+        move = self.snapshots[-1].lastMove
+
+        piece_captured  = self.snapshots[-1].piece_captured
+
+        self.board.undo_move(move,piece_captured)
 
         self.deadMoves = prev_state.deadMoves
 
@@ -269,28 +337,4 @@ class ChessGame():
         self.state = prev_state.state
 
         if pop:
-            self.stateHistory.pop()
-
-    def unplay_move_inplace(self,
-                            lastMove: Move, 
-                            piece_captured: Piece,
-                            piece_prev_state: PieceState,
-                            prev_valid_moves: list[Move],
-                            prev_dead_moves_cnt: int,
-                            prev_state: GameState
-                            ):
-        
-        self.board.undo_move(lastMove,piece_captured,piece_prev_state)
-
-        self._change_turn()
-
-        self._undo_player_data(lastMove,piece_captured)
-
-        self.validMoves = prev_valid_moves
-
-        if self.turn == PieceColor.BLACK:
-            self.totalMoves -= 1
-
-        self.deadMoves = prev_dead_moves_cnt
-
-        self.state = prev_state
+            self.snapshots.pop()

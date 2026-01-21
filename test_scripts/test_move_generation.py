@@ -3,7 +3,6 @@ from test_scripts.fens import fen_to_chessgame, moveObj_to_moveName
 import os, json
 from dotenv import load_dotenv
 
-
 load_dotenv()
 ROOT_DIR = os.getenv("ROOT_DIR")
 
@@ -54,8 +53,8 @@ def run_testcase(file_path):
             print(f"test {i} failed ")
             print(fen)
             board.print_board()
-            print(expected)
-            print(actual)
+            print(f"expeceted: {expected}")
+            print(f"actual:    {actual}")
             print()
 
 testcases = ['famous',

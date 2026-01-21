@@ -8,10 +8,6 @@ class PieceColor(Enum):
     WHITE = 1
     BLACK = 2
 
-class PieceState(Enum):
-    MOVED = 1
-    NOT_MOVED = 2
-
 class MoveType(Enum):
     NORMAL = 1
     CAPTURE = 2
@@ -53,7 +49,6 @@ class Piece(ABC):
                  position: tuple[int,int]):
         self.__color = color
         self.__type = p_type
-        self.state = PieceState.NOT_MOVED
         self.position = position
 
     @property

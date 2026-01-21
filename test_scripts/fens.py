@@ -3,7 +3,7 @@ import numpy as np
 from dotenv import load_dotenv
 from functools import reduce
 
-from src.piece import Piece, PieceType, Move, MoveType, Queen, Rook, King, Knight, Bishop, Pawn, PieceColor, PieceState
+from src.piece import Piece, PieceType, Move, MoveType, Queen, Rook, King, Knight, Bishop, Pawn, PieceColor
 from src.chessgame import ChessGame, GameSnapshot, GameState
 from src.chessboard import ChessBoard
 
@@ -85,21 +85,6 @@ def piece_to_str(piece: Piece | None):
     p_str = piece_symbols[piece.type]
     return p_str.lower() if piece.color == PieceColor.BLACK else p_str
 
-def gen_castle_str(board: np.array, k_i: int, k_j: int, r_i: int, r_j: int) -> str:
-    """
-    Helper function to help build the castling rights string.
-    
-    Receives the board and the coords where the king and the rook must be in order to castle.
-    Return a non-empty string if castling is available, whether it may not be a legal move
-    """
-    side = "k" if r_j == 7 else "q"
-
-    if (board[r_i][r_j] and board[r_i][r_j].type == PieceType.ROOK and board[r_i][r_j].state == PieceState.NOT_MOVED and
-        board[k_i][k_j] and board[k_i][k_j].type == PieceType.KING and board[k_i][k_j].state == PieceState.NOT_MOVED):
-        return side if k_i == 0 else side.upper() 
-    
-    return ""
-
 def chessgame_to_fen(game: ChessGame) -> str:
     """
     Generate the fen string of the given ChessGame.
@@ -111,10 +96,10 @@ def chessgame_to_fen(game: ChessGame) -> str:
 
     active_color = 'w' if game.turn == PieceColor.WHITE else 'b'
 
-    castling_rights = "".join([gen_castle_str(board,*coords) for coords in [(7,4,7,7),
-                                                                            (7,4,7,0),
-                                                                            (0,4,0,7),
-                                                                            (0,4,0,0)]])
+    castling_rights = "".join(["K" if game.WK else "", 
+                               "Q" if game.WQ else "", 
+                               "k" if game.BK else "", 
+                               "q" if game.BQ else ""])
 
     if castling_rights == "":
         castling_rights = "-"
@@ -122,7 +107,7 @@ def chessgame_to_fen(game: ChessGame) -> str:
     # enpassant_capture = next((move for move in game.validMoves if move.type == MoveType.ENPASSANT),None)
     # enpassant_str = numCoord_to_chessCoord(*enpassant_capture.coords[2:]) if enpassant_capture else '-'
 
-    lastMove = game.stateHistory[-1].lastMove
+    lastMove = game.snapshots[-1].lastMove
 
     enpassant_str = '-'
 
@@ -171,7 +156,6 @@ def fen_to_chessgame(fen: str) -> ChessGame:
         # Put a piece in the i,j square
         elif c.isalpha():
             np_board[i][j] = dict_piece[c.upper()](PieceColor.WHITE if c.isupper() else PieceColor.BLACK,(i,j)) 
-            np_board[i][j].state = PieceState.MOVED
             j += 1    
         # Go to the next rank
         elif c == '/':
@@ -202,31 +186,25 @@ def fen_to_chessgame(fen: str) -> ChessGame:
 
     turn = PieceColor.WHITE if active_color == 'w' else PieceColor.BLACK 
     
-    # Setting the state of the Rooks and the King based on castling rights
-    if('Q' in castling):
-        np_board[7][0].state = PieceState.NOT_MOVED
-        np_board[7][4].state = PieceState.NOT_MOVED
-    
-    if('K' in castling):
-        np_board[7][7].state = PieceState.NOT_MOVED
-        np_board[7][4].state = PieceState.NOT_MOVED
-    
-    if('q' in castling):
-        np_board[0][0].state = PieceState.NOT_MOVED
-        np_board[0][4].state = PieceState.NOT_MOVED
-    
-    if('k' in castling):
-        np_board[0][7].state = PieceState.NOT_MOVED
-        np_board[0][4].state = PieceState.NOT_MOVED
-
     game = ChessGame()
-    game.board = ChessBoard(customBoard=np_board)
     game.turn = turn
-    game.validMoves = game.board.gen_valid_moves(game.turn,lastMove)
-    game.stateHistory = [GameSnapshot(validMoves=game.validMoves,
+    
+    game.WQ = ('Q' in castling)
+    game.WK = ('K' in castling)
+    game.BQ = ('q' in castling)
+    game.BK = ('k' in castling)
+        
+    castling_bools = (game.BK,game.BQ) if game.turn == PieceColor.BLACK else (game.WK,game.WQ)
+    
+    game.board = ChessBoard(customBoard=np_board)
+    game.validMoves = game.board.gen_valid_moves(game.turn,*castling_bools,lastMove)
+    game.snapshots = [GameSnapshot(validMoves=game.validMoves,
                                       state=GameState.IN_PROGRESS,
-                                      board=np_board.copy(),
                                       deadMoves=int(dead_moves),
+                                      WK=game.WK,
+                                      WQ=game.WQ,
+                                      BK=game.BK,
+                                      BQ=game.BQ,
                                       lastMove=lastMove)]
     game.white = None
     game.black = None
@@ -259,4 +237,9 @@ if __name__ == "__main__":
 
             if (fen!=fen2):
                 print("test failed")
+                print(fen)
+                print(fen2)
+                print()
+                
+
 

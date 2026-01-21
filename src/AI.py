@@ -1,4 +1,4 @@
-from .piece import Move, PieceColor, MoveType, PieceType
+from .piece import Move, PieceColor, MoveType
 from .chessgame import ChessGame, GameState
 
 MAX_DEPTH = 3
@@ -16,7 +16,7 @@ def alpha_beta_root(game: ChessGame,  isMax: bool, alpha = -100000, beta = 10000
     moves = sorted(game.validMoves, key=move_score, reverse=True)
 
     for move in moves:
-        game.play_move(*move.coords,move.promotion,search_mode=True) #,save=False)
+        game.play_move(*move.coords,move.promotion,search_mode=True)
         score = alpha_beta(game, alpha, beta, 1, not isMax)
 
         if isMax:
@@ -71,7 +71,6 @@ def eval(game: ChessGame) -> int:
     mobility = len(game.validMoves)
     isChecked = 30 if game.board.is_checked(game.turn) else 0
 
-    # score = material_advantage - mobility
     score = (material_advantage + mobility - isChecked 
              if game.turn == PieceColor.WHITE 
              else material_advantage - mobility + isChecked)

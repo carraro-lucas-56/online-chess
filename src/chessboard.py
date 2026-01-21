@@ -1,5 +1,5 @@
 import numpy as np
-from .piece import (Piece, PieceState, PieceType, PieceColor,  
+from .piece import (Piece, PieceType, PieceColor,  
                        Move, MoveType, create_piece)
 
 class ChessBoard():
@@ -55,7 +55,29 @@ class ChessBoard():
         
         return False
     
-    def gen_valid_moves(self, turn: PieceColor, lastMove: Move | None = None) -> list[Move]:
+    def get_attacked_squares(self, color: PieceColor) -> list[tuple[int,int]]:
+        """ 
+        Return which coords in the back rank are being attacked by the given color.
+        """
+        
+        # back rank row
+        row = 7 if color == PieceColor.BLACK else 0
+
+        attacked_squares = []
+        for piece in self.board.flat:
+            if not piece or piece.color != color:
+                continue
+            elif piece.type == PieceType.PAWN:
+                attacked_squares.extend(piece.attacked_squares())
+            else:
+                attacked_squares.extend([
+                    move.coords[2:]
+                    for move in piece.get_moves(self.board) 
+                    if move.coords[2] == row])
+
+        return attacked_squares
+
+    def gen_valid_moves(self, turn: PieceColor,  CK: bool, CQ: bool, lastMove: Move | None = None) -> list[Move]:
         """
         Generate a list with all the valid moves for a given color in the current chess position.
         """
@@ -71,14 +93,13 @@ class ChessBoard():
         # If the king is checked in the resulting board, the move isn't valid. 
         for move in moves:
             (x,y) = move.coords[0:2]
-            old_state = self.board[x][y].state
 
             piece_captured = self.apply_move(move)
             
             if(not self.is_checked(turn)):
                 valid_moves.append(move)
 
-            self.undo_move(move,piece_captured,old_state)
+            self.undo_move(move,piece_captured)
 
         """
         checking for available en passant captures
@@ -119,59 +140,38 @@ class ChessBoard():
                 self.undo_move(enpassant_cap,pawn_captured)
 
         """
-        Checking for available castling moves
+        Checking for legal castling moves
         """
 
         # Back rank row
         row = 0 if turn == PieceColor.BLACK else 7
+        attacked_squares = []
 
-        # King needs to be is in the right spot and must have not moved yet
-        if (not self.board[row][4] 
-            or self.board[row][4].type != PieceType.KING 
-            or self.board[row][4].state == PieceState.MOVED):
-            return valid_moves 
+        if(not CK and not CQ):
+            return valid_moves
 
-        # Getting the coords from the squares in the desired row that are being attacked by the opponent 
-        attacked_squares = []        
-        for piece in self.board.flat:
-            if not piece or piece.color == turn:
-                continue
-            elif piece.type == PieceType.PAWN:
-                attacked_squares.extend(piece.attacked_squares())
-            else:
-                attacked_squares.extend([
-                    move.coords[2:]
-                    for move in piece.get_moves(self.board) 
-                    if move.coords[2] == row])
-
-        for (col,aux) in [(0,-1),(7,1)]:
-            # Rook needs to be in the right sopt and must have not moved yet
-            if (not self.board[row][col] 
-                or self.board[row][col].type != PieceType.ROOK 
-                or self.board[row][col].state == PieceState.MOVED):
-                continue    
+        # Checking if kingside castle is legal
+        if CK and not (self.board[row][5] or self.board[row][6]):
             
-            # The path between the king and the rook must be empty
-            if (self.board[row][4+aux] 
-                or self.board[row][4+2*aux] 
-                or (col == 0 and self.board[row][4+3*aux])): # The path is longer for long castling
-                continue
+            attacked_squares = self.get_attacked_squares(PieceColor.BLACK if turn == PieceColor.WHITE else PieceColor.WHITE)
             
-            squares_to_check = [
-            (row, 4),
-            (row, 4 + aux),  
-            (row, 4 + 2 * aux)
-            ]
+            if not any(square in attacked_squares for square in [(row,4),(row,5),(row,6)]):
+                valid_moves.append(Move((row,4,row,6),MoveType.CASTLE))
 
-            # If the king or the squares it must walk are attacked we can't castle
-            if any(square in attacked_squares for square in squares_to_check):
-                continue
+        # Checking if queenside castle is legal
+        if CQ and not (self.board[row][3] or self.board[row][2] or self.board[row][1]):
+            
+            if not attacked_squares:
+                attacked_squares = self.get_attacked_squares(PieceColor.BLACK if turn == PieceColor.WHITE else PieceColor.WHITE)
 
-            valid_moves.append(Move((row,4,row,4+2*aux),MoveType.CASTLE))
+            if any(square in attacked_squares for square in [(row,4),(row,3),(row,2)]):
+                return valid_moves
+            
+            valid_moves.append(Move((row,4,row,2),MoveType.CASTLE))
 
         return valid_moves                
 
-    def undo_move(self, move: Move, piece_captured: Piece | None = None, piece_old_state: PieceState | None = None) -> None:
+    def undo_move(self, move: Move, piece_captured: Piece | None = None) -> None:
         """
         Undo a given chess move.
 
@@ -193,8 +193,6 @@ class ChessBoard():
 
             self.board[x2][y2] = None
         else:
-            self.board[x][y].state = piece_old_state
-
             # Putting the captured piece back in the board
             self.board[x2][y2] = piece_captured
 
@@ -204,7 +202,6 @@ class ChessBoard():
             
             self.board[x][r_col] = self.board[x][y2+aux]
             self.board[x][r_col].position = (x,r_col)
-            self.board[x][r_col].state = PieceState.NOT_MOVED
             self.board[x][y2+aux] = None
             
 
@@ -244,12 +241,10 @@ class ChessBoard():
                 self.board[x][r_col2] = self.board[x][r_col]
                 self.board[x][r_col] = None
                 self.board[x][r_col2].position = (x,r_col2)
-                self.board[x][r_col2].state = PieceState.MOVED
         
         # Putting the moving piece in the destination square
         self.board[x2][y2] = piece 
         self.board[x2][y2].position = (x2,y2)
-        self.board[x2][y2].state = PieceState.MOVED
 
         return captured_piece
 

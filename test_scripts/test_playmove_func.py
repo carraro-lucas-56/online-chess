@@ -48,7 +48,7 @@ testcases = ['standard',
              'pawns',
              'promotions',
              'stalemates',
-             'taxing',
+             'taxing'
              ]
 
 for i, test in enumerate(testcases):

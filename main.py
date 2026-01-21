@@ -9,11 +9,12 @@ from dotenv import load_dotenv
 
 from assets import ImageCache
 from src.chessgame import ChessGame, GameState, InvalidMove, GameNotInProgress
-from src.piece import PieceColor, PieceType, Move, is_light_square
+from src.piece import PieceColor, PieceType, Move
 from render.board_view import BoardImage, PieceImage
-from render.colors import WHITE, GREY
+from render.colors import  GREY
 from render.hud import Hud
 from src.AI import alpha_beta_root
+from utils.utils import is_light_square
 
 load_dotenv()
 ROOT_DIR = os.getenv("ROOT_DIR")

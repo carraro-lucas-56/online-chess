@@ -1,0 +1,967 @@
+=================================================================
+Testcase 1 -> standard.json
+=================================================================
+-----------------------------------------------------------------
+FEN (1): rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+-----------------------------------------------------------------
+a4    incorrect
+Expected fen: rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq - 0 1
+Actual fen:   rnbqkbnr/pppppppp/8/8/P7/8/1PPPPPPP/RNBQKBNR b KQkq a3 0 1
+
+b4    incorrect
+Expected fen: rnbqkbnr/pppppppp/8/8/1P6/8/P1PPPPPP/RNBQKBNR b KQkq - 0 1
+Actual fen:   rnbqkbnr/pppppppp/8/8/1P6/8/P1PPPPPP/RNBQKBNR b KQkq b3 0 1
+
+c4    incorrect
+Expected fen: rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq - 0 1
+Actual fen:   rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq c3 0 1
+
+d4    incorrect
+Expected fen: rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1
+Actual fen:   rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1
+
+e4    incorrect
+Expected fen: rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1
+Actual fen:   rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1
+
+f4    incorrect
+Expected fen: rnbqkbnr/pppppppp/8/8/5P2/8/PPPPP1PP/RNBQKBNR b KQkq - 0 1
+Actual fen:   rnbqkbnr/pppppppp/8/8/5P2/8/PPPPP1PP/RNBQKBNR b KQkq f3 0 1
+
+g4    incorrect
+Expected fen: rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq - 0 1
+Actual fen:   rnbqkbnr/pppppppp/8/8/6P1/8/PPPPPP1P/RNBQKBNR b KQkq g3 0 1
+
+h4    incorrect
+Expected fen: rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq - 0 1
+Actual fen:   rnbqkbnr/pppppppp/8/8/7P/8/PPPPPPP1/RNBQKBNR b KQkq h3 0 1
+
+-----------------------------------------------------------------
+FEN (2): r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b - - 11 7
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: r1bqkbnr/1ppp1ppp/2n5/pB2p3/4P3/5N2/PPPP1PPP/RNBQK2R w - - 0 8
+Actual fen:   r1bqkbnr/1ppp1ppp/2n5/pB2p3/4P3/5N2/PPPP1PPP/RNBQK2R w - a6 0 8
+
+d5    incorrect
+Expected fen: r1bqkbnr/ppp2ppp/2n5/1B1pp3/4P3/5N2/PPPP1PPP/RNBQK2R w - - 0 8
+Actual fen:   r1bqkbnr/ppp2ppp/2n5/1B1pp3/4P3/5N2/PPPP1PPP/RNBQK2R w - d6 0 8
+
+f5    incorrect
+Expected fen: r1bqkbnr/pppp2pp/2n5/1B2pp2/4P3/5N2/PPPP1PPP/RNBQK2R w - - 0 8
+Actual fen:   r1bqkbnr/pppp2pp/2n5/1B2pp2/4P3/5N2/PPPP1PPP/RNBQK2R w - f6 0 8
+
+g5    incorrect
+Expected fen: r1bqkbnr/pppp1p1p/2n5/1B2p1p1/4P3/5N2/PPPP1PPP/RNBQK2R w - - 0 8
+Actual fen:   r1bqkbnr/pppp1p1p/2n5/1B2p1p1/4P3/5N2/PPPP1PPP/RNBQK2R w - g6 0 8
+
+h5    incorrect
+Expected fen: r1bqkbnr/pppp1pp1/2n5/1B2p2p/4P3/5N2/PPPP1PPP/RNBQK2R w - - 0 8
+Actual fen:   r1bqkbnr/pppp1pp1/2n5/1B2p2p/4P3/5N2/PPPP1PPP/RNBQK2R w - h6 0 8
+
+=================================================================
+Testcase 2 -> castling.json
+=================================================================
+-----------------------------------------------------------------
+FEN (1): 8/4k3/8/8/8/8/r6r/R3K2R w KQ - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (2): r3k2r/R6R/8/8/8/8/4K3/8 b kq - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (3): 8/4k3/8/8/8/8/r6r/R3K2R w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (4): r3k2r/R6R/8/8/8/8/4K3/8 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (5): 8/4k3/8/8/8/8/r6r/R3K2R w K - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (6): r3k2r/R6R/8/8/8/8/4K3/8 b k - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (7): 8/4k3/8/8/8/8/r6r/R3K2R w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (8): r3k2r/R6R/8/8/8/8/4K3/8 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (9): 1r6/4k3/8/8/8/8/r7/R3K3 w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (10): r3k3/R7/8/8/8/8/4K3/1R6 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (11): 2r5/4k3/8/8/8/8/r7/R3K3 w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (12): r3k3/R7/8/8/8/8/4K3/2R5 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (13): 8/4k3/8/8/8/b7/r7/R3K3 w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (14): r3k3/R7/B7/8/8/8/4K3/8 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (15): 8/4k3/8/8/8/8/n7/R3K3 w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (16): r3k3/N7/8/8/8/8/4K3/8 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (17): 8/4k3/8/8/5q2/8/r7/R3K3 w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (18): r3k3/R7/8/5Q2/8/8/4K3/8 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (19): 8/8/8/8/8/8/rk6/R3K3 w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (20): r3k3/RK6/8/8/8/8/8/8 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (21): 8/8/8/8/3k4/8/rp6/R3K3 w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (22): r3k3/RP6/8/3K4/8/8/8/8 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (23): 8/8/8/4r3/3k4/8/8/R3K2R w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (24): r3k2r/8/8/3K4/4R3/8/8/8 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (25): 8/8/4k3/8/8/8/4p3/R3K2R w KQ - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (26): r3k2r/4P3/8/8/8/4K3/8/8 b kq - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (27): 8/8/4k3/3bb3/8/8/8/R3K2R w KQ - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (28): r3k2r/8/8/8/3BB3/4K3/8/8 b kq - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (29): 8/8/4k3/8/8/8/2p3p1/R3K2R w KQ - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (30): r3k2r/2P3P1/8/8/8/4K3/8/8 b kq - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (31): 8/8/4k3/8/8/pr6/8/R3K3 w Q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (32): r3k3/8/PR6/8/8/4K3/8/8 b q - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (33): r3k2r/R3P2R/8/8/8/8/8/4K3 b kq - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (34): 4k3/8/8/8/8/8/r3p2r/R3K2R w KQ - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (35): rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1N1PP/RNBQK2n w Q - 1 8
+-----------------------------------------------------------------
+a4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/P1B5/8/1PP1N1PP/RNBQK2n b Q - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/P1B5/8/1PP1N1PP/RNBQK2n b Q a3 0 8
+
+b4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/1PB5/8/P1P1N1PP/RNBQK2n b Q - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/1PB5/8/P1P1N1PP/RNBQK2n b Q b3 0 8
+
+g4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/2B3P1/8/PPP1N2P/RNBQK2n b Q - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/2B3P1/8/PPP1N2P/RNBQK2n b Q g3 0 8
+
+h4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/2B4P/8/PPP1N1P1/RNBQK2n b Q - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/2B4P/8/PPP1N1P1/RNBQK2n b Q h3 0 8
+
+-----------------------------------------------------------------
+FEN (36): rnbqk2N/ppp1n1pp/8/2b5/8/2P5/PP1pBPPP/RNBQ1K1R b q - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: rnbqk2N/1pp1n1pp/8/p1b5/8/2P5/PP1pBPPP/RNBQ1K1R w q - 0 9
+Actual fen:   rnbqk2N/1pp1n1pp/8/p1b5/8/2P5/PP1pBPPP/RNBQ1K1R w q a6 0 9
+
+b5    incorrect
+Expected fen: rnbqk2N/p1p1n1pp/8/1pb5/8/2P5/PP1pBPPP/RNBQ1K1R w q - 0 9
+Actual fen:   rnbqk2N/p1p1n1pp/8/1pb5/8/2P5/PP1pBPPP/RNBQ1K1R w q b6 0 9
+
+g5    incorrect
+Expected fen: rnbqk2N/ppp1n2p/8/2b3p1/8/2P5/PP1pBPPP/RNBQ1K1R w q - 0 9
+Actual fen:   rnbqk2N/ppp1n2p/8/2b3p1/8/2P5/PP1pBPPP/RNBQ1K1R w q g6 0 9
+
+h5    incorrect
+Expected fen: rnbqk2N/ppp1n1p1/8/2b4p/8/2P5/PP1pBPPP/RNBQ1K1R w q - 0 9
+Actual fen:   rnbqk2N/ppp1n1p1/8/2b4p/8/2P5/PP1pBPPP/RNBQ1K1R w q h6 0 9
+
+-----------------------------------------------------------------
+FEN (37): rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1N1PP/RNBQKn1R w KQ - 1 8
+-----------------------------------------------------------------
+a4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/P1B5/8/1PP1N1PP/RNBQKn1R b KQ - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/P1B5/8/1PP1N1PP/RNBQKn1R b KQ a3 0 8
+
+b4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/1PB5/8/P1P1N1PP/RNBQKn1R b KQ - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/1PB5/8/P1P1N1PP/RNBQKn1R b KQ b3 0 8
+
+g4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/2B3P1/8/PPP1N2P/RNBQKn1R b KQ - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/2B3P1/8/PPP1N2P/RNBQKn1R b KQ g3 0 8
+
+h4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/2B4P/8/PPP1N1P1/RNBQKn1R b KQ - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/2B4P/8/PPP1N1P1/RNBQKn1R b KQ h3 0 8
+
+-----------------------------------------------------------------
+FEN (38): rnbqkN1r/ppp1n1pp/8/2b5/8/2P5/PP1pBPPP/RNBQ1K1R b kq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: rnbqkN1r/1pp1n1pp/8/p1b5/8/2P5/PP1pBPPP/RNBQ1K1R w kq - 0 9
+Actual fen:   rnbqkN1r/1pp1n1pp/8/p1b5/8/2P5/PP1pBPPP/RNBQ1K1R w kq a6 0 9
+
+b5    incorrect
+Expected fen: rnbqkN1r/p1p1n1pp/8/1pb5/8/2P5/PP1pBPPP/RNBQ1K1R w kq - 0 9
+Actual fen:   rnbqkN1r/p1p1n1pp/8/1pb5/8/2P5/PP1pBPPP/RNBQ1K1R w kq b6 0 9
+
+g5    incorrect
+Expected fen: rnbqkN1r/ppp1n2p/8/2b3p1/8/2P5/PP1pBPPP/RNBQ1K1R w kq - 0 9
+Actual fen:   rnbqkN1r/ppp1n2p/8/2b3p1/8/2P5/PP1pBPPP/RNBQ1K1R w kq g6 0 9
+
+h5    incorrect
+Expected fen: rnbqkN1r/ppp1n1p1/8/2b4p/8/2P5/PP1pBPPP/RNBQ1K1R w kq - 0 9
+Actual fen:   rnbqkN1r/ppp1n1p1/8/2b4p/8/2P5/PP1pBPPP/RNBQ1K1R w kq h6 0 9
+
+-----------------------------------------------------------------
+FEN (39): rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1N1PP/RNBQK1nR w KQ - 1 8
+-----------------------------------------------------------------
+a4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/P1B5/8/1PP1N1PP/RNBQK1nR b KQ - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/P1B5/8/1PP1N1PP/RNBQK1nR b KQ a3 0 8
+
+b4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/1PB5/8/P1P1N1PP/RNBQK1nR b KQ - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/1PB5/8/P1P1N1PP/RNBQK1nR b KQ b3 0 8
+
+g4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/2B3P1/8/PPP1N2P/RNBQK1nR b KQ - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/2B3P1/8/PPP1N2P/RNBQK1nR b KQ g3 0 8
+
+h4    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/2p5/8/2B4P/8/PPP1N1P1/RNBQK1nR b KQ - 0 8
+Actual fen:   rnbq1k1r/pp1Pbppp/2p5/8/2B4P/8/PPP1N1P1/RNBQK1nR b KQ h3 0 8
+
+-----------------------------------------------------------------
+FEN (40): rnbqk1Nr/ppp1n1pp/8/2b5/8/2P5/PP1pBPPP/RNBQ1K1R b kq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: rnbqk1Nr/1pp1n1pp/8/p1b5/8/2P5/PP1pBPPP/RNBQ1K1R w kq - 0 9
+Actual fen:   rnbqk1Nr/1pp1n1pp/8/p1b5/8/2P5/PP1pBPPP/RNBQ1K1R w kq a6 0 9
+
+b5    incorrect
+Expected fen: rnbqk1Nr/p1p1n1pp/8/1pb5/8/2P5/PP1pBPPP/RNBQ1K1R w kq - 0 9
+Actual fen:   rnbqk1Nr/p1p1n1pp/8/1pb5/8/2P5/PP1pBPPP/RNBQ1K1R w kq b6 0 9
+
+g5    incorrect
+Expected fen: rnbqk1Nr/ppp1n2p/8/2b3p1/8/2P5/PP1pBPPP/RNBQ1K1R w kq - 0 9
+Actual fen:   rnbqk1Nr/ppp1n2p/8/2b3p1/8/2P5/PP1pBPPP/RNBQ1K1R w kq g6 0 9
+
+h5    incorrect
+Expected fen: rnbqk1Nr/ppp1n1p1/8/2b4p/8/2P5/PP1pBPPP/RNBQ1K1R w kq - 0 9
+Actual fen:   rnbqk1Nr/ppp1n1p1/8/2b4p/8/2P5/PP1pBPPP/RNBQ1K1R w kq h6 0 9
+
+-----------------------------------------------------------------
+FEN (41): rnbqkN1r/pp2bppp/2p5/8/2B5/8/PPP1N1PP/RNBQK2R b KQkq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: rnbqkN1r/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqkN1r/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq a6 0 9
+
+b5    incorrect
+Expected fen: rnbqkN1r/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqkN1r/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq b6 0 9
+
+f5    incorrect
+Expected fen: rnbqkN1r/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqkN1r/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq f6 0 9
+
+g5    incorrect
+Expected fen: rnbqkN1r/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqkN1r/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq g6 0 9
+
+h5    incorrect
+Expected fen: rnbqkN1r/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqkN1r/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq h6 0 9
+
+c5    incorrect
+Expected fen: rnbqkN1r/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqkN1r/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq c6 0 9
+
+-----------------------------------------------------------------
+FEN (42): rnbqk2r/ppp1n1pp/8/2b5/8/2P5/PP2BPPP/RNBQKn1R w KQkq - 1 8
+-----------------------------------------------------------------
+c4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/RNBQKn1R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/RNBQKn1R b KQkq c3 0 8
+
+a4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/RNBQKn1R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/RNBQKn1R b KQkq a3 0 8
+
+b4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/RNBQKn1R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/RNBQKn1R b KQkq b3 0 8
+
+f4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/RNBQKn1R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/RNBQKn1R b KQkq f3 0 8
+
+g4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/RNBQKn1R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/RNBQKn1R b KQkq g3 0 8
+
+h4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/RNBQKn1R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/RNBQKn1R b KQkq h3 0 8
+
+-----------------------------------------------------------------
+FEN (43): rnbqk1Nr/pp2bppp/2p5/8/2B5/8/PPP1N1PP/RNBQK2R b KQkq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: rnbqk1Nr/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqk1Nr/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq a6 0 9
+
+b5    incorrect
+Expected fen: rnbqk1Nr/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqk1Nr/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq b6 0 9
+
+f5    incorrect
+Expected fen: rnbqk1Nr/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqk1Nr/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq f6 0 9
+
+g5    incorrect
+Expected fen: rnbqk1Nr/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqk1Nr/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq g6 0 9
+
+h5    incorrect
+Expected fen: rnbqk1Nr/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqk1Nr/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq h6 0 9
+
+c5    incorrect
+Expected fen: rnbqk1Nr/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rnbqk1Nr/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq c6 0 9
+
+-----------------------------------------------------------------
+FEN (44): rnbqk2r/ppp1n1pp/8/2b5/8/2P5/PP2BPPP/RNBQK1nR w KQkq - 1 8
+-----------------------------------------------------------------
+c4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/RNBQK1nR b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/RNBQK1nR b KQkq c3 0 8
+
+a4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/RNBQK1nR b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/RNBQK1nR b KQkq a3 0 8
+
+b4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/RNBQK1nR b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/RNBQK1nR b KQkq b3 0 8
+
+f4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/RNBQK1nR b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/RNBQK1nR b KQkq f3 0 8
+
+g4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/RNBQK1nR b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/RNBQK1nR b KQkq g3 0 8
+
+h4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/RNBQK1nR b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/RNBQK1nR b KQkq h3 0 8
+
+-----------------------------------------------------------------
+FEN (45): r2Nk2r/pp2bppp/2p5/8/2B5/8/PPP1N1PP/RNBQK2R b KQkq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: r2Nk2r/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r2Nk2r/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq a6 0 9
+
+b5    incorrect
+Expected fen: r2Nk2r/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r2Nk2r/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq b6 0 9
+
+f5    incorrect
+Expected fen: r2Nk2r/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r2Nk2r/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq f6 0 9
+
+g5    incorrect
+Expected fen: r2Nk2r/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r2Nk2r/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq g6 0 9
+
+h5    incorrect
+Expected fen: r2Nk2r/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r2Nk2r/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq h6 0 9
+
+c5    incorrect
+Expected fen: r2Nk2r/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r2Nk2r/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq c6 0 9
+
+-----------------------------------------------------------------
+FEN (46): rnbqk2r/ppp1n1pp/8/2b5/8/2P5/PP2BPPP/R2nK2R w KQkq - 1 8
+-----------------------------------------------------------------
+c4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/R2nK2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/R2nK2R b KQkq c3 0 8
+
+a4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/R2nK2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/R2nK2R b KQkq a3 0 8
+
+b4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/R2nK2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/R2nK2R b KQkq b3 0 8
+
+f4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/R2nK2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/R2nK2R b KQkq f3 0 8
+
+g4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/R2nK2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/R2nK2R b KQkq g3 0 8
+
+h4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/R2nK2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/R2nK2R b KQkq h3 0 8
+
+-----------------------------------------------------------------
+FEN (47): r1N1k2r/pp2bppp/2p5/8/2B5/8/PPP1N1PP/RNBQK2R b KQkq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: r1N1k2r/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r1N1k2r/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq a6 0 9
+
+b5    incorrect
+Expected fen: r1N1k2r/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r1N1k2r/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq b6 0 9
+
+f5    incorrect
+Expected fen: r1N1k2r/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r1N1k2r/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq f6 0 9
+
+g5    incorrect
+Expected fen: r1N1k2r/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r1N1k2r/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq g6 0 9
+
+h5    incorrect
+Expected fen: r1N1k2r/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r1N1k2r/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq h6 0 9
+
+c5    incorrect
+Expected fen: r1N1k2r/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   r1N1k2r/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq c6 0 9
+
+-----------------------------------------------------------------
+FEN (48): rnbqk2r/ppp1n1pp/8/2b5/8/2P5/PP2BPPP/R1n1K2R w KQkq - 1 8
+-----------------------------------------------------------------
+c4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/R1n1K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/R1n1K2R b KQkq c3 0 8
+
+a4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/R1n1K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/R1n1K2R b KQkq a3 0 8
+
+b4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/R1n1K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/R1n1K2R b KQkq b3 0 8
+
+f4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/R1n1K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/R1n1K2R b KQkq f3 0 8
+
+g4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/R1n1K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/R1n1K2R b KQkq g3 0 8
+
+h4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/R1n1K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/R1n1K2R b KQkq h3 0 8
+
+-----------------------------------------------------------------
+FEN (49): rN2k2r/pp2bppp/2p5/8/2B5/8/PPP1N1PP/RNBQK2R b KQkq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: rN2k2r/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rN2k2r/1p2bppp/2p5/p7/2B5/8/PPP1N1PP/RNBQK2R w KQkq a6 0 9
+
+b5    incorrect
+Expected fen: rN2k2r/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rN2k2r/p3bppp/2p5/1p6/2B5/8/PPP1N1PP/RNBQK2R w KQkq b6 0 9
+
+f5    incorrect
+Expected fen: rN2k2r/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rN2k2r/pp2b1pp/2p5/5p2/2B5/8/PPP1N1PP/RNBQK2R w KQkq f6 0 9
+
+g5    incorrect
+Expected fen: rN2k2r/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rN2k2r/pp2bp1p/2p5/6p1/2B5/8/PPP1N1PP/RNBQK2R w KQkq g6 0 9
+
+h5    incorrect
+Expected fen: rN2k2r/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rN2k2r/pp2bpp1/2p5/7p/2B5/8/PPP1N1PP/RNBQK2R w KQkq h6 0 9
+
+c5    incorrect
+Expected fen: rN2k2r/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq - 0 9
+Actual fen:   rN2k2r/pp2bppp/8/2p5/2B5/8/PPP1N1PP/RNBQK2R w KQkq c6 0 9
+
+-----------------------------------------------------------------
+FEN (50): rnbqk2r/ppp1n1pp/8/2b5/8/2P5/PP2BPPP/Rn2K2R w KQkq - 1 8
+-----------------------------------------------------------------
+c4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/Rn2K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/2P5/8/PP2BPPP/Rn2K2R b KQkq c3 0 8
+
+a4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/Rn2K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/P7/2P5/1P2BPPP/Rn2K2R b KQkq a3 0 8
+
+b4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/Rn2K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/1P6/2P5/P3BPPP/Rn2K2R b KQkq b3 0 8
+
+f4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/Rn2K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/5P2/2P5/PP2B1PP/Rn2K2R b KQkq f3 0 8
+
+g4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/Rn2K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/6P1/2P5/PP2BP1P/Rn2K2R b KQkq g3 0 8
+
+h4    incorrect
+Expected fen: rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/Rn2K2R b KQkq - 0 8
+Actual fen:   rnbqk2r/ppp1n1pp/8/2b5/7P/2P5/PP2BPP1/Rn2K2R b KQkq h3 0 8
+
+-----------------------------------------------------------------
+FEN (51): r3k2r/pp2bppp/2p5/8/2B5/8/PPP1N1PP/Rn2K2R w KQkq - 1 8
+-----------------------------------------------------------------
+a4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/P1B5/8/1PP1N1PP/Rn2K2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/P1B5/8/1PP1N1PP/Rn2K2R b KQkq a3 0 8
+
+b4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/1PB5/8/P1P1N1PP/Rn2K2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/1PB5/8/P1P1N1PP/Rn2K2R b KQkq b3 0 8
+
+g4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/2B3P1/8/PPP1N2P/Rn2K2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/2B3P1/8/PPP1N2P/Rn2K2R b KQkq g3 0 8
+
+h4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/2B4P/8/PPP1N1P1/Rn2K2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/2B4P/8/PPP1N1P1/Rn2K2R b KQkq h3 0 8
+
+-----------------------------------------------------------------
+FEN (52): rN2k2r/ppp1n1pp/8/2b5/8/2P5/PP2BPPP/R3K2R b KQkq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: rN2k2r/1pp1n1pp/8/p1b5/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   rN2k2r/1pp1n1pp/8/p1b5/8/2P5/PP2BPPP/R3K2R w KQkq a6 0 9
+
+b5    incorrect
+Expected fen: rN2k2r/p1p1n1pp/8/1pb5/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   rN2k2r/p1p1n1pp/8/1pb5/8/2P5/PP2BPPP/R3K2R w KQkq b6 0 9
+
+g5    incorrect
+Expected fen: rN2k2r/ppp1n2p/8/2b3p1/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   rN2k2r/ppp1n2p/8/2b3p1/8/2P5/PP2BPPP/R3K2R w KQkq g6 0 9
+
+h5    incorrect
+Expected fen: rN2k2r/ppp1n1p1/8/2b4p/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   rN2k2r/ppp1n1p1/8/2b4p/8/2P5/PP2BPPP/R3K2R w KQkq h6 0 9
+
+-----------------------------------------------------------------
+FEN (53): r3k2r/pp2bppp/2p5/8/2B5/8/PPP1N1PP/R1n1K2R w KQkq - 1 8
+-----------------------------------------------------------------
+a4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/P1B5/8/1PP1N1PP/R1n1K2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/P1B5/8/1PP1N1PP/R1n1K2R b KQkq a3 0 8
+
+b4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/1PB5/8/P1P1N1PP/R1n1K2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/1PB5/8/P1P1N1PP/R1n1K2R b KQkq b3 0 8
+
+g4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/2B3P1/8/PPP1N2P/R1n1K2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/2B3P1/8/PPP1N2P/R1n1K2R b KQkq g3 0 8
+
+h4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/2B4P/8/PPP1N1P1/R1n1K2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/2B4P/8/PPP1N1P1/R1n1K2R b KQkq h3 0 8
+
+-----------------------------------------------------------------
+FEN (54): r1N1k2r/ppp1n1pp/8/2b5/8/2P5/PP2BPPP/R3K2R b KQkq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: r1N1k2r/1pp1n1pp/8/p1b5/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   r1N1k2r/1pp1n1pp/8/p1b5/8/2P5/PP2BPPP/R3K2R w KQkq a6 0 9
+
+b5    incorrect
+Expected fen: r1N1k2r/p1p1n1pp/8/1pb5/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   r1N1k2r/p1p1n1pp/8/1pb5/8/2P5/PP2BPPP/R3K2R w KQkq b6 0 9
+
+g5    incorrect
+Expected fen: r1N1k2r/ppp1n2p/8/2b3p1/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   r1N1k2r/ppp1n2p/8/2b3p1/8/2P5/PP2BPPP/R3K2R w KQkq g6 0 9
+
+h5    incorrect
+Expected fen: r1N1k2r/ppp1n1p1/8/2b4p/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   r1N1k2r/ppp1n1p1/8/2b4p/8/2P5/PP2BPPP/R3K2R w KQkq h6 0 9
+
+-----------------------------------------------------------------
+FEN (55): r3k2r/pp2bppp/2p5/8/2B5/8/PPP1N1PP/R2nK2R w KQkq - 1 8
+-----------------------------------------------------------------
+a4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/P1B5/8/1PP1N1PP/R2nK2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/P1B5/8/1PP1N1PP/R2nK2R b KQkq a3 0 8
+
+b4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/1PB5/8/P1P1N1PP/R2nK2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/1PB5/8/P1P1N1PP/R2nK2R b KQkq b3 0 8
+
+g4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/2B3P1/8/PPP1N2P/R2nK2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/2B3P1/8/PPP1N2P/R2nK2R b KQkq g3 0 8
+
+h4    incorrect
+Expected fen: r3k2r/pp2bppp/2p5/8/2B4P/8/PPP1N1P1/R2nK2R b KQkq - 0 8
+Actual fen:   r3k2r/pp2bppp/2p5/8/2B4P/8/PPP1N1P1/R2nK2R b KQkq h3 0 8
+
+-----------------------------------------------------------------
+FEN (56): r2Nk2r/ppp1n1pp/8/2b5/8/2P5/PP2BPPP/R3K2R b KQkq - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: r2Nk2r/1pp1n1pp/8/p1b5/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   r2Nk2r/1pp1n1pp/8/p1b5/8/2P5/PP2BPPP/R3K2R w KQkq a6 0 9
+
+b5    incorrect
+Expected fen: r2Nk2r/p1p1n1pp/8/1pb5/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   r2Nk2r/p1p1n1pp/8/1pb5/8/2P5/PP2BPPP/R3K2R w KQkq b6 0 9
+
+g5    incorrect
+Expected fen: r2Nk2r/ppp1n2p/8/2b3p1/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   r2Nk2r/ppp1n2p/8/2b3p1/8/2P5/PP2BPPP/R3K2R w KQkq g6 0 9
+
+h5    incorrect
+Expected fen: r2Nk2r/ppp1n1p1/8/2b4p/8/2P5/PP2BPPP/R3K2R w KQkq - 0 9
+Actual fen:   r2Nk2r/ppp1n1p1/8/2b4p/8/2P5/PP2BPPP/R3K2R w KQkq h6 0 9
+
+-----------------------------------------------------------------
+FEN (57): rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R b KQ - 1 8
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: rnbq1k1r/1p1Pbppp/2p5/p7/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 9
+Actual fen:   rnbq1k1r/1p1Pbppp/2p5/p7/2B5/8/PPP1NnPP/RNBQK2R w KQ a6 0 9
+
+b5    incorrect
+Expected fen: rnbq1k1r/p2Pbppp/2p5/1p6/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 9
+Actual fen:   rnbq1k1r/p2Pbppp/2p5/1p6/2B5/8/PPP1NnPP/RNBQK2R w KQ b6 0 9
+
+f5    incorrect
+Expected fen: rnbq1k1r/pp1Pb1pp/2p5/5p2/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 9
+Actual fen:   rnbq1k1r/pp1Pb1pp/2p5/5p2/2B5/8/PPP1NnPP/RNBQK2R w KQ f6 0 9
+
+g5    incorrect
+Expected fen: rnbq1k1r/pp1Pbp1p/2p5/6p1/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 9
+Actual fen:   rnbq1k1r/pp1Pbp1p/2p5/6p1/2B5/8/PPP1NnPP/RNBQK2R w KQ g6 0 9
+
+h5    incorrect
+Expected fen: rnbq1k1r/pp1Pbpp1/2p5/7p/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 9
+Actual fen:   rnbq1k1r/pp1Pbpp1/2p5/7p/2B5/8/PPP1NnPP/RNBQK2R w KQ h6 0 9
+
+c5    incorrect
+Expected fen: rnbq1k1r/pp1Pbppp/8/2p5/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 9
+Actual fen:   rnbq1k1r/pp1Pbppp/8/2p5/2B5/8/PPP1NnPP/RNBQK2R w KQ c6 0 9
+
+-----------------------------------------------------------------
+FEN (58): rnbqk2r/ppp1nNpp/8/2b5/8/2P5/PP1pBPPP/RNBQ1K1R w kq - 1 8
+-----------------------------------------------------------------
+c4    incorrect
+Expected fen: rnbqk2r/ppp1nNpp/8/2b5/2P5/8/PP1pBPPP/RNBQ1K1R b kq - 0 8
+Actual fen:   rnbqk2r/ppp1nNpp/8/2b5/2P5/8/PP1pBPPP/RNBQ1K1R b kq c3 0 8
+
+a4    incorrect
+Expected fen: rnbqk2r/ppp1nNpp/8/2b5/P7/2P5/1P1pBPPP/RNBQ1K1R b kq - 0 8
+Actual fen:   rnbqk2r/ppp1nNpp/8/2b5/P7/2P5/1P1pBPPP/RNBQ1K1R b kq a3 0 8
+
+b4    incorrect
+Expected fen: rnbqk2r/ppp1nNpp/8/2b5/1P6/2P5/P2pBPPP/RNBQ1K1R b kq - 0 8
+Actual fen:   rnbqk2r/ppp1nNpp/8/2b5/1P6/2P5/P2pBPPP/RNBQ1K1R b kq b3 0 8
+
+f4    incorrect
+Expected fen: rnbqk2r/ppp1nNpp/8/2b5/5P2/2P5/PP1pB1PP/RNBQ1K1R b kq - 0 8
+Actual fen:   rnbqk2r/ppp1nNpp/8/2b5/5P2/2P5/PP1pB1PP/RNBQ1K1R b kq f3 0 8
+
+g4    incorrect
+Expected fen: rnbqk2r/ppp1nNpp/8/2b5/6P1/2P5/PP1pBP1P/RNBQ1K1R b kq - 0 8
+Actual fen:   rnbqk2r/ppp1nNpp/8/2b5/6P1/2P5/PP1pBP1P/RNBQ1K1R b kq g3 0 8
+
+h4    incorrect
+Expected fen: rnbqk2r/ppp1nNpp/8/2b5/7P/2P5/PP1pBPP1/RNBQ1K1R b kq - 0 8
+Actual fen:   rnbqk2r/ppp1nNpp/8/2b5/7P/2P5/PP1pBPP1/RNBQ1K1R b kq h3 0 8
+
+-----------------------------------------------------------------
+FEN (59): rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8
+-----------------------------------------------------------------
+=================================================================
+Testcase 3 -> checkmates.json
+=================================================================
+-----------------------------------------------------------------
+FEN (1): 1R3k2/2R5/8/8/8/1K6/8/8 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (2): 8/8/1k6/8/8/8/2r5/1r3K2 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (3): 8/6N1/3R4/6k1/5Pp1/1K2P3/8/4B1R1 b - f3 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (4): 4b1r1/8/1k2p3/5pP1/6K1/3r4/6n1/8 w - f6 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (5): kr6/ppN5/8/8/8/8/2K5/8 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (6): 8/2k5/8/8/8/8/PPn5/KR6 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (7): k1K5/p1N5/8/8/8/8/8/8 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (8): 8/8/8/8/8/8/P1n5/K1k5 w - - 0 1
+-----------------------------------------------------------------
+=================================================================
+Testcase 4 -> famous.json
+=================================================================
+-----------------------------------------------------------------
+FEN (1): r3r1k1/pp3pbp/1qp1b1p1/2B5/2BP4/Q1n2N2/P4PPP/3R1K1R w - - 4 18
+-----------------------------------------------------------------
+g4    incorrect
+Expected fen: r3r1k1/pp3pbp/1qp1b1p1/2B5/2BP2P1/Q1n2N2/P4P1P/3R1K1R b - - 0 18
+Actual fen:   r3r1k1/pp3pbp/1qp1b1p1/2B5/2BP2P1/Q1n2N2/P4P1P/3R1K1R b - g3 0 18
+
+h4    incorrect
+Expected fen: r3r1k1/pp3pbp/1qp1b1p1/2B5/2BP3P/Q1n2N2/P4PP1/3R1K1R b - - 0 18
+Actual fen:   r3r1k1/pp3pbp/1qp1b1p1/2B5/2BP3P/Q1n2N2/P4PP1/3R1K1R b - h3 0 18
+
+-----------------------------------------------------------------
+FEN (2): 5rk1/pp4pp/4p3/2R3Q1/3n4/2q4r/P1P2PPP/5RK1 b - - 0 1
+-----------------------------------------------------------------
+a5    incorrect
+Expected fen: 5rk1/1p4pp/4p3/p1R3Q1/3n4/2q4r/P1P2PPP/5RK1 w - - 0 2
+Actual fen:   5rk1/1p4pp/4p3/p1R3Q1/3n4/2q4r/P1P2PPP/5RK1 w - a6 0 2
+
+b5    incorrect
+Expected fen: 5rk1/p5pp/4p3/1pR3Q1/3n4/2q4r/P1P2PPP/5RK1 w - - 0 2
+Actual fen:   5rk1/p5pp/4p3/1pR3Q1/3n4/2q4r/P1P2PPP/5RK1 w - b6 0 2
+
+h5    incorrect
+Expected fen: 5rk1/pp4p1/4p3/2R3Qp/3n4/2q4r/P1P2PPP/5RK1 w - - 0 2
+Actual fen:   5rk1/pp4p1/4p3/2R3Qp/3n4/2q4r/P1P2PPP/5RK1 w - h6 0 2
+
+e5    incorrect
+Expected fen: 5rk1/pp4pp/8/2R1p1Q1/3n4/2q4r/P1P2PPP/5RK1 w - - 0 2
+Actual fen:   5rk1/pp4pp/8/2R1p1Q1/3n4/2q4r/P1P2PPP/5RK1 w - e6 0 2
+
+=================================================================
+Testcase 5 -> pawns.json
+=================================================================
+-----------------------------------------------------------------
+FEN (1): 7k/8/8/8/pPp5/8/8/7K b - b3 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (2): 7k/8/8/PpP5/8/8/8/7K w - b6 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (3): 7k/8/8/8/pPp5/8/8/7K b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (4): 7k/8/8/PpP5/8/8/8/7K w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (5): 8/4k3/1p1p1p1p/pPpPpPpP/P1P1P1P1/8/5K2/8 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (6): 8/5k2/8/p1p1p1p1/PpPpPpPp/1P1P1P1P/4K3/8 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (7): 8/8/4k3/8/2pPp3/8/B7/7K b - d3 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (8): 7k/b7/8/2PpP3/8/4K3/8/8 w - d6 0 1
+-----------------------------------------------------------------
+=================================================================
+Testcase 6 -> promotions.json
+=================================================================
+-----------------------------------------------------------------
+FEN (1): 1k6/5P2/8/8/8/8/8/4K3 w - - 20 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (2): 4k3/8/8/8/8/8/5p2/1K6 b - - 20 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (3): 3k4/8/1K6/8/8/8/pppppppp/RRRRRRRR b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (4): rrrrrrrr/PPPPPPPP/8/8/8/1k6/8/3K4 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (5): nnnnnnnn/PPPPPPPP/8/8/8/8/8/K6k w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (6): k6K/8/8/8/8/8/pppppppp/NNNNNNNN b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (7): 8/ppp3p1/8/8/3p4/8/1ppp2K1/brk2Q1n b - - 12 7
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (8): BRK2q1N/1PPP2k1/8/3P4/8/8/PPP3P1/8 w - - 12 7
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (9): 5N1N/4k1P1/8/8/8/8/8/K7 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (10): k7/8/8/8/8/8/4K1p1/5n1n b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (11): NBQKRBRN/PPPPPPPP/8/8/8/8/3k4/8 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (12): 8/3K4/8/8/8/8/pppppppp/nbqkrbrn b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (13): 3K3r/2PPP3/8/2k5/8/8/8/8 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (14): 8/8/8/8/2K5/8/2ppp3/3k3R b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (15): q7/1PPPPPPP/8/8/8/K1k5/8/8 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (16): 8/8/k1K5/8/8/8/1ppppppp/Q7 b - - 0 1
+-----------------------------------------------------------------
+=================================================================
+Testcase 7 -> stalemates.json
+=================================================================
+-----------------------------------------------------------------
+FEN (1): k7/1R6/2K5/8/8/8/8/8 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (2): 8/8/8/8/8/2k5/1r6/K7 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (3): k7/8/2N5/8/8/2K5/1R6/8 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (4): 8/1r6/2k5/8/8/2n5/8/K7 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (5): k7/2Q5/8/8/8/2K5/8/8 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (6): 8/8/2k5/8/8/8/2q5/K7 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (7): 8/8/5R2/4k1P1/3R4/2K5/8/8 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (8): 8/8/2k5/3r4/4K1p1/5r2/8/8 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (9): 5bnr/4p1pq/4Qpkr/7p/7P/4P3/PPPP1PP1/RNB1KBNR b KQ - 2 10
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (10): rnb1kbnr/pppp1pp1/4p3/7p/7P/4qPKR/4P1PQ/5BNR w kq - 2 10
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (11): 8/8/R7/4k3/4Pp2/2P2P2/7B/1K6 b - e3 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (12): 1k6/7b/2p2p2/4pP2/4K3/r7/8/8 w - e6 0 1
+-----------------------------------------------------------------
+=================================================================
+Testcase 8 -> taxing.json
+=================================================================
+-----------------------------------------------------------------
+FEN (1): R6R/3Q4/1Q4Q1/4Q3/2Q4Q/Q4Q2/pp1Q4/kBNN1KB1 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (2): Kbnn1kb1/PP1q4/q4q2/2q4q/4q3/1q4q1/3q4/r6r b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (3): B2k4/1B6/2B5/3B4/4B3/1B3B2/5KB1/6BB w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (4): 6bb/5kb1/1b3b2/4b3/3b4/2b5/1b6/b2K4 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (5): 1Bk5/B1B5/1B1B4/B1B4B/1B6/B7/5K2/8 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (6): 8/5k2/b7/1b6/b1b4b/1b1b4/b1b5/1bK5 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (7): BBB5/BBB5/BBB4k/B1K5/8/8/8/8 w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (8): 8/8/8/8/b1k5/bbb4K/bbb5/bbb5 b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (9): 4k3/8/8/p1K1Pp1r/Pp5p/6pP/6P1/8 w - f6 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (10): 8/6p1/6Pp/pP5P/P1k1pP1R/8/8/4K3 b - f3 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (11): 8/8/8/p7/PR1Ppk1p/6pP/6P1/2K5 b - d3 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (12): 2k5/6p1/6Pp/pr1pPK1P/P7/8/8/8 w - d6 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (13): nnnnnnnn/8/8/8/P2P1k2/8/6P1/n1K4n b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (14): N1k4N/6p1/8/p2p1K2/8/8/8/NNNNNNNN w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (15): n6n/8/8/8/P1KP1k2/8/6P1/nnnnnnnn b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (16): NNNNNNNN/6p1/8/p1kp1K2/8/8/8/N6N w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (17): NNNNNNNN/8/8/4k3/8/3K4/8/N6N w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (18): n6n/8/3k4/8/4K3/8/8/nnnnnnnn b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (19): N6N/8/8/4k3/8/3K4/8/NNNNNNNN w - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (20): nnnnnnnn/8/3k4/8/4K3/8/8/n6n b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (21): 8/6kR/8/8/8/bq6/1rqqqqqq/K1nqnbrq b - - 0 1
+-----------------------------------------------------------------
+-----------------------------------------------------------------
+FEN (22): k1NQNBRQ/1RQQQQQQ/BQ6/8/8/8/6Kr/8 w - - 0 1
+-----------------------------------------------------------------

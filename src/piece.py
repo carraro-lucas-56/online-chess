@@ -2,7 +2,7 @@ from enum import Enum
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
-from Utils.utils import is_light_square, in_bound
+from utils.utils import is_light_square, in_bound
 
 class PieceColor(Enum):
     WHITE = 1

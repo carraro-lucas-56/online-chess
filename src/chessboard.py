@@ -91,17 +91,17 @@ class ChessBoard():
         if lastMove:        
             (r,c) = lastMove.coords[2:]
             piece_moved = self.board[r][c]
-            if piece_moved.type == PieceType.PAWN and abs(piece_moved.initial_row-r) == 2:
+            if piece_moved.type == PieceType.PAWN and abs(piece_moved.initial_row-r) == 2 and piece_moved.initial_row == lastMove.coords[0]:
                 pawn_coords = (r,c)
 
-        if pawn_coords:
-            # aux tells which direction that pawn moves
+        if pawn_coords:                                                                                                                                                                                                                                                                                     
+            # aux tells which direction that pawn moves                                                                                                                                                                                                                                                                                                                                                                                                                                     
             aux = 1 if turn == PieceColor.BLACK else -1
 
             # Checks the squares in the right/left from the target pawn
             for y in [c+1,c-1]:
                 if(y > 7 or y < 0):
-                    continue
+                    continue                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 
                 piece = self.board[r][y]
 

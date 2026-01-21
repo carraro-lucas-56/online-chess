@@ -1,4 +1,4 @@
-from test_scripts.Utils import fen_to_chessgame, moveObj_to_moveName
+from test_scripts.fens import fen_to_chessgame, moveObj_to_moveName
 
 import os, json
 from dotenv import load_dotenv

@@ -1,7 +1,7 @@
 import json
 import copy
 
-from test_scripts.Utils import fen_to_chessgame, moveObj_to_moveName, chessgame_to_fen, ROOT_DIR
+from test_scripts.fens import fen_to_chessgame, moveObj_to_moveName, chessgame_to_fen, ROOT_DIR
 
 def run_testcase(file_path):
 
@@ -25,8 +25,6 @@ def run_testcase(file_path):
                        else item["move"][:-1]) : item["fen"] 
                        for item in test["expected"]}
 
-        game.board.print_board()
-
         for move in prev_valid_moves:
             
             game.play_move(*move.coords,move.promotion)
@@ -43,7 +41,6 @@ def run_testcase(file_path):
             game.unplay_move(pop=True)
 
             
-
 testcases = ['standard',
              'castling',
              'checkmates',

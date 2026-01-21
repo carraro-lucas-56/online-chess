@@ -207,16 +207,10 @@ class ChessGame():
             raise GameNotInProgress
 
         # Checking which moves matches the given coordinates
-        moves = [m for m in self.validMoves if m.coords == (x,y,x2,y2)]
-        
-        if not moves:
-            raise InvalidMove
+        move = next((m for m in self.validMoves if m.coords == (x,y,x2,y2) and m.promotion == prom_piece),None)
 
-        # Checking if it's a promotion move
-        if(len(moves) > 1):
-            move = next(m for m in moves if m.promotion == prom_piece)
-        else:
-            move = moves[0]
+        if move is None:
+            raise InvalidMove
 
         piece_prev_state = self.board.board[move.coords[0]][move.coords[1]].state
             
@@ -236,7 +230,6 @@ class ChessGame():
         self.validMoves = self.board.gen_valid_moves(self.turn,move)
         self._update_state()
 
-        
         self.stateHistory.append(GameSnapshot(lastMove=move,
                                               deadMoves=self.deadMoves,
                                               validMoves=self.validMoves,

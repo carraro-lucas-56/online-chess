@@ -42,8 +42,8 @@ def alpha_beta(game: ChessGame, alpha: int, beta: int, depth: int, isMax: bool) 
 
     moves = sorted(game.validMoves, key=move_score, reverse=True)
 
-    for move in moves:
-        game.play_move(*move.coords,move.promotion,search_mode=True) # ,save=False)    
+    for move in moves:        
+        game.play_move(*move.coords,move.promotion,search_mode=True) #,save=False)
         score = alpha_beta(game, alpha, beta, depth+1, not isMax)
 
         if isMax:

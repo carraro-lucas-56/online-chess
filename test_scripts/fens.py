@@ -82,8 +82,7 @@ def piece_to_str(piece: Piece | None):
     if not piece:
         return " "
     
-    p_str = piece.type.value if piece.type not in (PieceType.LIGHT_BISHOP,PieceType.DARK_BISHOP) else "B"
-
+    p_str = piece_symbols[piece.type]
     return p_str.lower() if piece.color == PieceColor.BLACK else p_str
 
 def gen_castle_str(board: np.array, k_i: int, k_j: int, r_i: int, r_j: int) -> str:
@@ -203,7 +202,6 @@ def fen_to_chessgame(fen: str) -> ChessGame:
 
     turn = PieceColor.WHITE if active_color == 'w' else PieceColor.BLACK 
     
-
     # Setting the state of the Rooks and the King based on castling rights
     if('Q' in castling):
         np_board[7][0].state = PieceState.NOT_MOVED

@@ -1,4 +1,4 @@
-from test_scripts.Utils import *
+from test_scripts.fens import *
 from src.chessgame import ChessGame
 
 # Chess positions where checkmate is impossible even with cooperation.

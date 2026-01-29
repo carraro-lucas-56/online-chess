@@ -1,5 +1,5 @@
-from test_scripts.fens import *
-from src.chessgame import ChessGame
+from test_scripts.fens import fen_to_chessgame
+from src.piece import PieceColor
 
 # Chess positions where checkmate is impossible even with cooperation.
 fens = [
@@ -15,16 +15,10 @@ fens = [
 ]
 
 for fen in fens:
-    game = ChessGame()
+    game = fen_to_chessgame(fen)
 
-    board, _ = fen_to_chessboard(fen)
-
-    game.board = board 
-    game.white.piecesLeft = [p.type for p in board.board.flat if p and p.color == PieceColor.WHITE]
-    game.black.piecesLeft = [p.type for p in board.board.flat if p and p.color == PieceColor.BLACK]
-    game.validMoves = game.board.gen_valid_moves(PieceColor.WHITE)
-    # print(fen)
-    # game.board.print_board()
+    game.white.piecesLeft = [p.type for p in game.board.board.flat if p and p.color == PieceColor.WHITE]
+    game.black.piecesLeft = [p.type for p in game.board.board.flat if p and p.color == PieceColor.BLACK]
 
     game._update_state()
     print(game.state.name)

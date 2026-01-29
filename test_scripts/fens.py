@@ -114,7 +114,11 @@ def chessgame_to_fen(game: ChessGame) -> str:
     # Checks if the last move was a two square pawn advance
     if (lastMove and lastMove.type == MoveType.NORMAL):
         piece = board[lastMove.coords[2]][lastMove.coords[3]]
-        if (piece.type == PieceType.PAWN and piece.color != game.turn and abs(piece.initial_row-lastMove.coords[2]) == 2):
+        if (piece.type == PieceType.PAWN 
+            and piece.color != game.turn 
+            and abs(piece.initial_row-lastMove.coords[2]) == 2
+            and piece.initial_row == lastMove.coords[0]):
+            
             aux = -1 if game.turn == PieceColor.WHITE else 1
             enpassant_str = numCoord_to_chessCoord(lastMove.coords[2]+aux,lastMove.coords[3]) 
 
@@ -162,27 +166,27 @@ def fen_to_chessgame(fen: str) -> ChessGame:
             i+=1
             j=0
 
-    moveName_to_Move = {
+    moveName_to_Coord = {
         "-": None, 
-        "a3": Move((6,0,4,0),MoveType.NORMAL),
-        "b3": Move((6,1,4,1),MoveType.NORMAL),
-        "c3": Move((6,2,4,2),MoveType.NORMAL),
-        "d3": Move((6,3,4,3),MoveType.NORMAL),
-        "e3": Move((6,4,4,4),MoveType.NORMAL),
-        "f3": Move((6,5,4,5),MoveType.NORMAL),
-        "g3": Move((6,6,4,6),MoveType.NORMAL),
-        "h3": Move((6,7,4,7),MoveType.NORMAL),
-        "a6": Move((1,0,3,0),MoveType.NORMAL),
-        "b6": Move((1,1,3,1),MoveType.NORMAL),
-        "c6": Move((1,2,3,2),MoveType.NORMAL),
-        "d6": Move((1,3,3,3),MoveType.NORMAL),
-        "e6": Move((1,4,3,4),MoveType.NORMAL),
-        "f6": Move((1,5,3,5),MoveType.NORMAL),
-        "g6": Move((1,6,3,6),MoveType.NORMAL),
-        "h6": Move((1,7,3,7),MoveType.NORMAL),
+        "a3": (4,0),
+        "b3": (4,1),
+        "c3": (4,2),
+        "d3": (4,3),
+        "e3": (4,4),
+        "f3": (4,5),
+        "g3": (4,6),
+        "h3": (4,7),
+        "a6": (3,0),
+        "b6": (3,1),
+        "c6": (3,2),
+        "d6": (3,3),
+        "e6": (3,4),
+        "f6": (3,5),
+        "g6": (3,6),
+        "h6": (3,7),
     }
 
-    lastMove = moveName_to_Move[enpassant_square]
+    enpassant_coord = moveName_to_Coord[enpassant_square]
 
     turn = PieceColor.WHITE if active_color == 'w' else PieceColor.BLACK 
     
@@ -197,7 +201,7 @@ def fen_to_chessgame(fen: str) -> ChessGame:
     castling_bools = (game.BK,game.BQ) if game.turn == PieceColor.BLACK else (game.WK,game.WQ)
     
     game.board = ChessBoard(customBoard=np_board)
-    game.validMoves = game.board.gen_valid_moves(game.turn,*castling_bools,lastMove)
+    game.validMoves = game.board.gen_valid_moves(game.turn,*castling_bools,enpassant_coord)
     game.snapshots = [GameSnapshot(validMoves=game.validMoves,
                                       state=GameState.IN_PROGRESS,
                                       deadMoves=int(dead_moves),
@@ -205,12 +209,13 @@ def fen_to_chessgame(fen: str) -> ChessGame:
                                       WQ=game.WQ,
                                       BK=game.BK,
                                       BQ=game.BQ,
-                                      lastMove=lastMove)]
-    game.white = None
-    game.black = None
+                                      lastMove=None)]
+    # game.white = None
+    # game.black = None
     game.deadMoves = int(dead_moves)
     game.totalMoves = int(total_moves)
     game.state = GameState.IN_PROGRESS
+    game.init_zobrist()
 
     return game    
 

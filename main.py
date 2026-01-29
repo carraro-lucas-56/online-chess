@@ -20,7 +20,7 @@ load_dotenv()
 ROOT_DIR = os.getenv("ROOT_DIR")
 
 # =======================================================
-# ================= USEFUL FUNCTIONS ====================
+# ------------------ USEFUL FUNCTIONS -------------------
 # =======================================================
 
 def can_toggle_promotion(game: ChessGame, x: int, y: int, x2: int, y2: int) -> bool:
@@ -89,7 +89,7 @@ def load_assets():
             ImageCache.load(name, f"{ROOT_DIR}/images/{name}.png")
 
 # =======================================================
-# ============== INITIALIZING VARIABLES =================
+# --------------- INITIALIZING VARIABLES ----------------
 # =======================================================
 
 q = queue.Queue()
@@ -134,9 +134,9 @@ ai_thread = None
 
 running = True
 
-# =======================================================
-# ================ MAIN PROGRAM LOOP ====================
-# =======================================================
+# ======================================================
+# ----------------- MAIN PROGRAM LOOP ------------------
+# ======================================================
 
 while running:
     DISPLAYSURF.fill(GREY)
@@ -156,9 +156,9 @@ while running:
             pygame.quit()
             sys.exit()
         
-        if event.type == pygame.KEYUP and event.key == pygame.K_u:
-            game.unplay_move()
-            boardImage.pieces = [PieceImage.from_piece_obj(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
+        # if event.type == pygame.KEYUP and event.key == pygame.K_u:
+        #     game.unplay_move()
+        #     boardImage.pieces = [PieceImage.from_piece_obj(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
             
         # Get user's click coords (if it's the user's turn)
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1 and not thinking.is_set():
@@ -195,7 +195,6 @@ while running:
             try:
                 game.play_move(r,c,r2,c2,prom_piece)
                 boardImage.pieces = [PieceImage.from_piece_obj(piece,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
-               
                 # Start thread to get the engine's move
                 if game.state == GameState.IN_PROGRESS and (ai_thread is None or not ai_thread.is_alive()):
                     snapshot = copy.deepcopy(game)
@@ -233,3 +232,4 @@ while running:
 
     pygame.display.update()
     FramePerSec.tick(FPS)
+

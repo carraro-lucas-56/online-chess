@@ -27,6 +27,7 @@ class ScoreView():
         if(white_score > black_score):
             img = self.font.render(f'+{white_score-black_score}', True, WHITE)
             surface.blit(img, self.pos_white)
+        
         elif(white_score < black_score):
             img = self.font.render(f'+{black_score-white_score}', True, WHITE)
             surface.blit(img, self.pos_black)

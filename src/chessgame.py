@@ -1,9 +1,20 @@
+import numpy as np
+import itertools
 from enum import Enum
 from dataclasses import dataclass
 
 from .piece import Piece, PieceType, PieceColor, Move, MoveType, PIECE_VALUES
 from .chessboard import ChessBoard
 from .player import Player
+
+class GameError(Exception):
+    pass
+
+class InvalidMove(GameError):
+    pass
+
+class GameNotInProgress(GameError):
+    pass
 
 class GameState(Enum):
     IN_PROGRESS = 1
@@ -22,18 +33,10 @@ class GameSnapshot:
     BQ: bool = True
     WK: bool = True
     WQ: bool = True 
+    enpassantSquare: tuple[int,int] | None = None
     deadMoves: int = 0
     piece_captured: Piece | None = None
-    lastMove: Move = None
-
-class GameError(Exception):
-    pass
-
-class InvalidMove(GameError):
-    pass
-
-class GameNotInProgress(GameError):
-    pass
+    lastMove: Move | None = None
 
 class ChessGame():
     def __init__(self):
@@ -45,18 +48,90 @@ class ChessGame():
         # List with all the valid moves current available for the colos who's playing in this turn
         self.validMoves = self.board.gen_valid_moves(self.turn,True,True)
           
-        # castling rights
+        # Castling rights
         self.BK = True
         self.BQ = True
         self.WK = True
         self.WQ = True
 
-        # move count
+        # Coords of a pawn that can be captured en passant
+        self.enpassantSquare = None
+
+        # Move count
         self.deadMoves = 0   
         self.totalMoves = 1
 
+        # State attributes
         self.state = GameState.READY_TO_START
         self.snapshots = [GameSnapshot(validMoves=self.validMoves,state=self.state)]
+
+        self.gen_random_attr_keys()
+        self.init_zobrist()
+
+    def _change_turn(self) -> None:
+        self.turn = PieceColor.WHITE if self.turn == PieceColor.BLACK else PieceColor.BLACK
+
+    def gen_random_attr_keys(self) -> None:
+        """
+        Assign random numbers for game attributes.
+        """
+        rng = np.random.default_rng(seed=1000)
+        max = np.iinfo(np.uint64).max
+
+        # Assigning random number for each combination of (square,piece,color)
+        self.pieceSquareKeys = {}
+        square_coords = [(x,y) for x in range(8) for y in range(8)]
+
+        combs = itertools.product(square_coords,PieceType,PieceColor)
+        
+        for item in combs:
+            self.pieceSquareKeys[item] = rng.integers(0,max,dtype=np.uint64)
+
+        # Assigning random number to indicate if it's white playing
+        self.whitePlayingKey = rng.integers(0,max,dtype=np.uint64)
+
+        # Assigning random number for castling rights
+        self.castlingKeys = {}
+        for item in ["WK","WQ","BK","BQ"]:
+            self.castlingKeys[item] = rng.integers(0,max,dtype=np.uint64)
+        
+        # Assigning random number for each file (usefull for en passant squares)
+        self.enpassantKeys = {}
+        for x in range(8):
+            self.enpassantKeys[x] = rng.integers(0,max,dtype=np.uint64)
+
+    def init_zobrist(self) -> np.uint64:
+        """
+        Applies an inital hash value to the game.
+        """
+
+        xor = np.uint64(0)
+
+        for x in range(8):
+            for y in range(8):
+                piece = self.board.board[x][y]
+                if piece:
+                    xor ^= self.pieceSquareKeys[((x,y),piece.type,piece.color)]
+
+        if self.turn == PieceColor.WHITE:
+            xor ^= self.whitePlayingKey
+
+        if self.WK:
+            xor ^= self.castlingKeys["WK"]
+        
+        if self.WQ:
+            xor ^= self.castlingKeys["WQ"]
+        
+        if self.BK:
+            xor ^= self.castlingKeys["BK"]
+        
+        if self.BQ:
+            xor ^= self.castlingKeys["BQ"]
+        
+        if self.enpassantSquare:
+            xor ^= self.enpassantKeys[self.enpassantSquare[0]]
+
+        self.zobristHash = xor
 
     def set_initial_setup(self) -> None:
         self.board.reset()
@@ -71,19 +146,19 @@ class ChessGame():
         self.BK = True
         self.WQ = True
         self.WK = True
+        self.enpassantSquare = None
         self.deadMoves = 0
         self.deadMoves = 1
+        self.gen_random_attr_keys()
+        self.init_zobrist()
 
     def start_game(self) -> None:
         if self.state != GameState.READY_TO_START:
             self.set_initial_setup()
         self.state = GameState.IN_PROGRESS
 
-    def _change_turn(self) -> None:
-        self.turn = PieceColor.WHITE if self.turn == PieceColor.BLACK else PieceColor.BLACK
-
 # =======================================================
-# ===== HELPER FUNCTIONS TO UPDATE GAME ATTRIBUTES ======
+# ----- HELPER FUNCTIONS TO UPDATE GAME ATTRIBUTES ------
 # =======================================================
 
     def _insufficient_material(self) -> bool:
@@ -246,11 +321,82 @@ class ChessGame():
             elif (self.WK and (x2,y2) == (7,0)):
                 self.WQ = False
 
+    def update_hash(self) -> None:
+        """
+        Must be called after the given move is made.
+        """
+        new_hash = self.zobristHash
+    
+        curr_state = self.snapshots[-1]
+        prev_state = self.snapshots[-2] # game state before the move was played
+
+        move = curr_state.lastMove
+        (x,y,x2,y2) = move.coords
+
+        piece = self.board.board[x2][y2]
+        piece_captured = curr_state.piece_captured
+
+        match move.type:
+            case MoveType.NORMAL:
+                new_hash ^= self.pieceSquareKeys[(x,y),piece.type,piece.color]
+                new_hash ^= self.pieceSquareKeys[(x2,y2),piece.type,piece.color]
+            
+            case MoveType.PROMOTION_CAPTURE | MoveType.PROMOTION_NORMAL:
+                new_hash ^= self.pieceSquareKeys[(x,y),PieceType.PAWN,piece.color]
+                new_hash ^= self.pieceSquareKeys[((x2,y2),move.promotion,piece.color)]
+
+                if move.type == MoveType.PROMOTION_CAPTURE:
+                    new_hash ^= self.pieceSquareKeys[((x2,y2),piece_captured.type,piece_captured.color)]
+
+            case MoveType.CAPTURE:
+                new_hash ^= self.pieceSquareKeys[(x,y),piece.type,piece.color]
+                new_hash ^= self.pieceSquareKeys[((x2,y2),piece_captured.type,piece_captured.color)]
+                new_hash ^= self.pieceSquareKeys[((x2,y2),piece.type,piece.color)]
+
+            case MoveType.CASTLE:
+                (r_col,aux) = (0,1) if y-y2 > 0 else (7,-1)
+
+                new_hash ^= self.pieceSquareKeys[((x,r_col) ,PieceType.ROOK,piece.color)]         
+                new_hash ^= self.pieceSquareKeys[((x,y2+aux),PieceType.ROOK,piece.color)]         
+    
+                new_hash ^= self.pieceSquareKeys[(x,y),piece.type,piece.color]
+                new_hash ^= self.pieceSquareKeys[((x2,y2),piece.type,piece.color)]
+
+            case MoveType.ENPASSANT:
+                new_hash ^= self.pieceSquareKeys[(x,y),piece.type,piece.color]
+                new_hash ^= self.pieceSquareKeys[((x,y2),PieceType.PAWN,piece.color)]         
+                new_hash ^= self.pieceSquareKeys[((x2,y2),piece.type,piece.color)]
+
+        if prev_state.WK != self.WK:
+            new_hash ^= self.castlingKeys["WK"]
+        
+        if prev_state.WQ != self.WQ:
+            new_hash ^= self.castlingKeys["WQ"]
+        
+        if prev_state.BK != self.BK:
+            new_hash ^= self.castlingKeys["BK"]
+        
+        if prev_state.BQ != self.BQ:
+            new_hash ^= self.castlingKeys["BQ"]
+        
+        if prev_state.enpassantSquare != self.enpassantSquare:
+            if self.enpassantSquare is not None:
+                new_hash ^= self.enpassantKeys[self.enpassantSquare[0]]
+            if prev_state.enpassantSquare is not None:
+                new_hash ^= self.enpassantKeys[prev_state.enpassantSquare[0]]
+
+        new_hash ^= self.whitePlayingKey
+
+        self.zobristHash = new_hash
+
 # ========================================================
-# ===== FUNCTIONS PERFORM AND UNDO MOVES IN THE GAME =====
+# ----- FUNCTIONS PERFORM AND UNDO MOVES IN THE GAME -----
 # ========================================================
 
-    def play_move(self, x: int, y: int, x2: int, y2: int, prom_piece: PieceType | None = None, search_mode=False) -> Move:
+    def play_move(self, x: int, y: int, x2: int, y2: int, 
+                  prom_piece: PieceType | None = None, 
+                  search_mode=False, 
+                  move_obj: Move | None = None) -> Move:
         """
         Validates and applies a move given by board coordinates.
 
@@ -263,13 +409,25 @@ class ChessGame():
             raise GameNotInProgress
 
         # Checking which move matches the given coordinates
-        move = next((m for m in self.validMoves if m.coords == (x,y,x2,y2) and m.promotion == prom_piece),None)
+        move = (move_obj if move_obj
+                else next((m for m in self.validMoves if m.coords == (x,y,x2,y2) and m.promotion == prom_piece),None))
 
         if move is None:
             raise InvalidMove
 
         self._update_castling_rights(move)            
         
+        move.coords = (x,y,x2,y2)
+        piece_moved = self.board.board[x][y]
+
+        # Checking if the move is a two square pawn advance
+        if (piece_moved.type == PieceType.PAWN 
+            and piece_moved.initial_row == x
+            and abs(piece_moved.initial_row-x2)) == 2:
+            self.enpassantSquare = (x2,y2) 
+        else:
+            self.enpassantSquare = None
+                
         self._update_player_data(move)
         
         # Update 75-move rule counter
@@ -286,7 +444,7 @@ class ChessGame():
         
         (CK, CQ) = (self.BK,self.BQ) if self.turn == PieceColor.BLACK else (self.WK,self.WQ)
 
-        self.validMoves = self.board.gen_valid_moves(self.turn,CK,CQ,move)
+        self.validMoves = self.board.gen_valid_moves(self.turn,CK,CQ,self.enpassantSquare)
 
         # Checks if the game ended
         self._update_state(search_mode=search_mode)
@@ -299,7 +457,10 @@ class ChessGame():
                                            BQ=self.BQ,
                                            WK=self.WK,
                                            WQ=self.WQ,
+                                           enpassantSquare=self.enpassantSquare,
                                            piece_captured=piece_captured))
+
+        self.update_hash()
 
     def unplay_move(self, pop: bool=True) -> None:
         """
@@ -309,6 +470,8 @@ class ChessGame():
         # there's no more moves to undo
         if len(self.snapshots) < 2:
             return 
+
+        self.update_hash()
 
         self._change_turn()
         
@@ -325,6 +488,8 @@ class ChessGame():
 
         self.board.undo_move(move,piece_captured)
 
+        self.enpassantSquare = prev_state.enpassantSquare
+
         self.deadMoves = prev_state.deadMoves
 
         if self.turn == PieceColor.BLACK:
@@ -338,3 +503,4 @@ class ChessGame():
 
         if pop:
             self.snapshots.pop()
+

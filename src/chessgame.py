@@ -338,18 +338,18 @@ class ChessGame():
 
         match move.type:
             case MoveType.NORMAL:
-                new_hash ^= self.pieceSquareKeys[(x,y),piece.type,piece.color]
-                new_hash ^= self.pieceSquareKeys[(x2,y2),piece.type,piece.color]
+                new_hash ^= self.pieceSquareKeys[((x,y),piece.type,piece.color)]
+                new_hash ^= self.pieceSquareKeys[((x2,y2),piece.type,piece.color)]
             
             case MoveType.PROMOTION_CAPTURE | MoveType.PROMOTION_NORMAL:
-                new_hash ^= self.pieceSquareKeys[(x,y),PieceType.PAWN,piece.color]
+                new_hash ^= self.pieceSquareKeys[((x,y),PieceType.PAWN,piece.color)]
                 new_hash ^= self.pieceSquareKeys[((x2,y2),move.promotion,piece.color)]
 
                 if move.type == MoveType.PROMOTION_CAPTURE:
                     new_hash ^= self.pieceSquareKeys[((x2,y2),piece_captured.type,piece_captured.color)]
 
             case MoveType.CAPTURE:
-                new_hash ^= self.pieceSquareKeys[(x,y),piece.type,piece.color]
+                new_hash ^= self.pieceSquareKeys[((x,y),piece.type,piece.color)]
                 new_hash ^= self.pieceSquareKeys[((x2,y2),piece_captured.type,piece_captured.color)]
                 new_hash ^= self.pieceSquareKeys[((x2,y2),piece.type,piece.color)]
 
@@ -359,11 +359,11 @@ class ChessGame():
                 new_hash ^= self.pieceSquareKeys[((x,r_col) ,PieceType.ROOK,piece.color)]         
                 new_hash ^= self.pieceSquareKeys[((x,y2+aux),PieceType.ROOK,piece.color)]         
     
-                new_hash ^= self.pieceSquareKeys[(x,y),piece.type,piece.color]
+                new_hash ^= self.pieceSquareKeys[((x,y),piece.type,piece.color)]
                 new_hash ^= self.pieceSquareKeys[((x2,y2),piece.type,piece.color)]
 
             case MoveType.ENPASSANT:
-                new_hash ^= self.pieceSquareKeys[(x,y),piece.type,piece.color]
+                new_hash ^= self.pieceSquareKeys[((x,y),piece.type,piece.color)]
                 new_hash ^= self.pieceSquareKeys[((x,y2),PieceType.PAWN,piece.color)]         
                 new_hash ^= self.pieceSquareKeys[((x2,y2),piece.type,piece.color)]
 

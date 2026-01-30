@@ -13,7 +13,7 @@ from src.piece import PieceColor, PieceType, Move
 from render.board_view import BoardImage, PieceImage
 from render.colors import  GREY
 from render.hud import Hud
-from src.AI import alpha_beta_root
+from src.AI import Engine
 from utils.utils import is_light_square
 
 load_dotenv()
@@ -69,18 +69,18 @@ def coord_to_piece(col: int, x: int, y: int, turn: PieceColor) -> PieceType | No
 
     return None
 
-def toggle_robot_move(game_snapshot: ChessGame, q: queue, thinking: threading.Event) -> Move:
+def toggle_robot_move(game_snapshot: ChessGame, q: queue, thinking: threading.Event, engine: Engine) -> Move:
     """
     Trigger alpha beta pruning algorithm and put the generated move into the given queue.
     """
-    # try:
-    thinking.set()
-    engine_move = alpha_beta_root(game_snapshot,False)
-    q.put(engine_move)    
-    thinking.clear()
-    # except Exception as e:
-    #     print(f'error in toggle robot_move: {e}')
-    #     thinking.clear()
+    try:
+        thinking.set()
+        engine_move = engine.alpha_beta_root(game_snapshot,False)
+        q.put(engine_move)    
+        thinking.clear()
+    except Exception as e:
+        print(f'error in toggle robot_move: {e}')
+        thinking.clear()
 
 def load_assets():
     for color in ("white", "black"):
@@ -132,6 +132,8 @@ prom_piece = None
 thinking = threading.Event()
 ai_thread = None
 
+engine = Engine()
+
 running = True
 
 # ======================================================
@@ -146,10 +148,10 @@ while running:
 
     dt = clock.tick(FPS) / 1000  # seconds
 
-    if game.turn == PieceColor.WHITE:
-        game.white.time_left -= dt
-    else:
-        game.black.time_left -= dt
+    # if game.turn == PieceColor.WHITE:
+    #     game.white.time_left -= dt
+    # else:
+    #     game.black.time_left -= dt
 
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -199,7 +201,7 @@ while running:
                 if game.state == GameState.IN_PROGRESS and (ai_thread is None or not ai_thread.is_alive()):
                     snapshot = copy.deepcopy(game)
                     ai_thread = threading.Thread(target=toggle_robot_move,
-                                                 args=[snapshot,q,thinking],
+                                                 args=[snapshot,q,thinking,engine],
                                                  daemon=True)
                     ai_thread.start()
             except GameNotInProgress:

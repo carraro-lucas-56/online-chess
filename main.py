@@ -2,6 +2,7 @@ import sys, os
 import threading
 import copy
 import queue
+import time
 
 import  pygame
 from pygame.locals import *
@@ -73,14 +74,19 @@ def toggle_robot_move(game_snapshot: ChessGame, q: queue, thinking: threading.Ev
     """
     Trigger alpha beta pruning algorithm and put the generated move into the given queue.
     """
-    try:
-        thinking.set()
-        engine_move = engine.alpha_beta_root(game_snapshot,False)
-        q.put(engine_move)    
-        thinking.clear()
-    except Exception as e:
-        print(f'error in toggle robot_move: {e}')
-        thinking.clear()
+    
+   
+    thinking.set()
+    start_time = time.perf_counter()
+    for depth in range(1,engine.MAX_DEPTH+1):
+        engine_move = engine.alpha_beta_root(game_snapshot,False,max_depth=depth)
+    q.put(engine_move)
+    end_time = time.perf_counter()
+    print(f"{(end_time - start_time):.2f}s")    
+    thinking.clear()
+    # except Exception as e:
+    #     print(f'error in toggle robot_move: {e}')
+    #     thinking.clear()
 
 def load_assets():
     for color in ("white", "black"):

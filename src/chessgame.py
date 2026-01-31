@@ -34,20 +34,21 @@ class GameSnapshot:
     WK: bool = True
     WQ: bool = True 
     enpassantSquare: tuple[int,int] | None = None
-    deadMoves: int = 0
+    pawn_promoted: Piece | None = None
     piece_captured: Piece | None = None
+    deadMoves: int = 0
     lastMove: Move | None = None
 
 class ChessGame():
     def __init__(self):
         self.turn = PieceColor.WHITE
         self.board = ChessBoard()
-        self.white = Player(PieceColor.WHITE,time_left=600)
-        self.black = Player(PieceColor.BLACK,time_left=600,robot=True)
+        self.white = Player(PieceColor.WHITE,board=self.board.board,time_left=600)
+        self.black = Player(PieceColor.BLACK,board=self.board.board,time_left=600,robot=True)
 
         # List with all the valid moves current available for the colos who's playing in this turn
-        self.validMoves = self.board.gen_valid_moves(self.turn,True,True)
-          
+        self.validMoves = self.board.gen_valid_moves(self.turn,self.white.piecesLeft,self.black.piecesLeft,True,True)
+
         # Castling rights
         self.BK = True
         self.BQ = True
@@ -224,10 +225,11 @@ class ChessGame():
         """
 
         player = self.black if self.turn == PieceColor.WHITE else self.white
-        
+        pieces = self.black.piecesLeft if self.turn == PieceColor.BLACK else self.white.piecesLeft
+
         if not self.validMoves:
             self.state = (GameState.CHACKMATE 
-                          if self.board.is_checked(self.turn)
+                          if self.board.is_checked(self.turn,pieces)
                           else GameState.STALEMATE)
         if search_mode:
             return    
@@ -239,46 +241,50 @@ class ChessGame():
         elif player.time_left <= 0:
             self.state = GameState.TIMEOUT
 
-    def _update_player_data(self,move: Move) -> None:
+    def _update_player_data(self, pawn_promoted: Piece | None, piece_captured: Piece | None ,move: Move) -> None:
         """
         Updates players's data based on the provided move.
         
-        p1 is the player who will perform the move.
+        p1 is the player who performed the move.
         We suppose that the move is valid.
+
+        pawn_promoted is the piece that was in the origin square before the move was done.
         """
 
         (p1,p2) = ((self.white,self.black) if self.turn == PieceColor.WHITE 
                                            else (self.black,self.white))
 
-        piece_captured = (self.board.board[move.coords[0]][move.coords[3]] 
-                          if move.type == MoveType.ENPASSANT 
-                          else self.board.board[move.coords[2]][move.coords[3]])
-        
         if(piece_captured):
-            p1.add_captured_piece(piece_captured.type)
-            p2.remove_piece(piece_captured.type)
+            p1.add_captured_piece(piece_captured)
+            p2.remove_piece(piece_captured)
 
         match move.type:
             case MoveType.PROMOTION_NORMAL | MoveType.PROMOTION_CAPTURE:
-                p1.add_piece(move.promotion)
-                p1.remove_piece(PieceType.PAWN)
+                prom_piece = self.board.board[move.coords[2]][move.coords[3]]
+                p1.add_piece(prom_piece)
+                p1.remove_piece(pawn_promoted)
                 p1.score += PIECE_VALUES[move.promotion]-1
             case MoveType.CAPTURE | MoveType.ENPASSANT:
                 p1.score += PIECE_VALUES[piece_captured.type]
 
-    def _undo_player_data (self, move: Move, piece_captured: Piece | None = None) -> None:  
+    def _undo_player_data (self, pawn_promoted: Piece, piece_captured: Piece | None, move: Move) -> None:  
+        """
+        Updates player data after undoing the give move.
 
+        piece_moved is the piece that was in the destination square BEFORE the move was undone in the board.
+        """
         (p1,p2) = ((self.white,self.black) if self.turn == PieceColor.WHITE 
                                            else (self.black,self.white))
 
         if piece_captured:        
             p1.remove_captured_piece()
-            p2.add_piece(piece_captured.type)
+            p2.add_piece(piece_captured)
 
         match move.type:
             case MoveType.PROMOTION_NORMAL | MoveType.PROMOTION_CAPTURE:
-                p1.add_piece(PieceType.PAWN)
-                p1.remove_piece(move.promotion)
+                prom_piece = self.board.board[move.coords[2]][move.coords[3]]
+                p1.remove_piece(prom_piece)
+                p1.add_piece(pawn_promoted)
                 p1.score -= PIECE_VALUES[move.promotion]-1
             case MoveType.CAPTURE | MoveType.ENPASSANT:
                 p1.score -= PIECE_VALUES[piece_captured.type]
@@ -326,7 +332,7 @@ class ChessGame():
         Must be called after the given move is made.
         """
         new_hash = self.zobristHash
-    
+
         curr_state = self.snapshots[-1]
         prev_state = self.snapshots[-2] # game state before the move was played
 
@@ -428,8 +434,6 @@ class ChessGame():
         else:
             self.enpassantSquare = None
                 
-        self._update_player_data(move)
-        
         # Update 75-move rule counter
         self.deadMoves = (self.deadMoves + 1 
                           if self.board.board[x][y].type != PieceType.PAWN and move.type != MoveType.CAPTURE
@@ -438,16 +442,24 @@ class ChessGame():
         if self.turn == PieceColor.BLACK:
             self.totalMoves += 1
 
-        piece_captured = self.board.apply_move(move)
+        pawn_promoted, piece_captured = self.board.apply_move(move)
+        
+        self._update_player_data(pawn_promoted,piece_captured,move)
 
         self._change_turn()
         
-        (CK, CQ) = (self.BK,self.BQ) if self.turn == PieceColor.BLACK else (self.WK,self.WQ)
+        (pieces, oppsPieces, CK, CQ) = ((self.black.piecesLeft,self.white.piecesLeft,self.BK,self.BQ) 
+                                         if self.turn == PieceColor.BLACK 
+                                         else (self.white.piecesLeft,self.black.piecesLeft,self.WK,self.WQ))
 
-        self.validMoves = self.board.gen_valid_moves(self.turn,CK,CQ,self.enpassantSquare)
+        # s = time.perf_counter()
+        self.validMoves = self.board.gen_valid_moves(self.turn,pieces,oppsPieces,CK,CQ,self.enpassantSquare)
+        # e = time.perf_counter()
+        # print(f"{(e-s):.5f}") 
 
         # Checks if the game ended
         self._update_state(search_mode=search_mode)
+
 
         self.snapshots.append(GameSnapshot(lastMove=move,
                                            deadMoves=self.deadMoves,
@@ -458,11 +470,12 @@ class ChessGame():
                                            WK=self.WK,
                                            WQ=self.WQ,
                                            enpassantSquare=self.enpassantSquare,
+                                           pawn_promoted=pawn_promoted,
                                            piece_captured=piece_captured))
 
         self.update_hash()
 
-    def unplay_move(self, pop: bool=True) -> None:
+    def unplay_move(self, pop: bool=True, search_mode: bool = False) -> None:
         """
         Restore the game overall state back to how it was before the last move played.
         """
@@ -485,8 +498,12 @@ class ChessGame():
         move = self.snapshots[-1].lastMove
 
         piece_captured  = self.snapshots[-1].piece_captured
+        
+        pawn_promoted = self.snapshots[-1].pawn_promoted
 
-        self.board.undo_move(move,piece_captured)
+        self.board.undo_move(move,pawn_promoted,piece_captured)
+
+        self._undo_player_data(pawn_promoted,piece_captured,move)
 
         self.enpassantSquare = prev_state.enpassantSquare
 
@@ -496,11 +513,18 @@ class ChessGame():
             self.totalMoves -= 1
 
         self.validMoves = prev_state.validMoves
-        
-        self._undo_player_data(move,piece_captured)
 
         self.state = prev_state.state
 
         if pop:
             self.snapshots.pop()
 
+if __name__ == "__main__":
+    import time
+    game = ChessGame()
+    game.start_game()
+    # s = time.perf_counter()
+    game.play_move(6,4,4,4)
+    # game.unplay_move()
+    # e = time.perf_counter()
+    # print(f"{(e-s):.5f} seg")

@@ -1,6 +1,6 @@
 import pygame
 
-from src.chessgame import ChessGame, PieceColor, PieceType
+from src.chessgame import ChessGame, PieceColor, Piece
 from render.board_view import PieceImage
 from render.colors import WHITE
 
@@ -39,10 +39,10 @@ class PiecesCapturedView():
         self.pos = pos # Position of the first piece to be drawn
         self.color = p_color
 
-    def draw(self, surface: pygame.Surface, ps_captured: list[PieceType]):
+    def draw(self, surface: pygame.Surface, ps_captured: list[Piece]):
         if len(self.pieces) < len(ps_captured):
             x = len(self.pieces)
-            p_type = ps_captured[-1]
+            p_type = ps_captured[-1].type
             self.pieces.append(PieceImage(pos=(self.pos[0]+x*20,self.pos[1]),
                                           square_size=(30,30),
                                           p_type=p_type,

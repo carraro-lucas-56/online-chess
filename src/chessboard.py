@@ -1,4 +1,6 @@
 import numpy as np
+import time
+
 from .piece import (Piece, PieceType, PieceColor,  
                        Move, MoveType, create_piece)
 
@@ -38,21 +40,72 @@ class ChessBoard():
         """
         self.board = self._initial_position()
 
-    def is_checked(self, turn: PieceColor) -> bool:
+    def is_checked(self, turn: PieceColor, pieces: list[Piece]) -> bool:
         """
-        Return true if the king of the given color is checked
+        Return True if the king of `turn` is in check.
         """
-        for piece in self.board.flat:
-            # Empty square or friendly piece
-            if not piece or piece.color == turn:
-                continue
-            
-            # Check for moves that attack the king  
-            if next((move for move in piece.get_moves(self.board) 
-                        if self.board[move.coords[2]][move.coords[3]] and 
-                           self.board[move.coords[2]][move.coords[3]].type == PieceType.KING),None):
-                return True
-        
+
+        # 1) Find king square
+        king = next(p for p in pieces if p.type == PieceType.KING)
+        kr, kc = king.position
+
+        enemy = PieceColor.BLACK if turn == PieceColor.WHITE else PieceColor.WHITE
+        board = self.board
+
+        # 2) Pawn attacks
+        pawn_dir = 1 if enemy == PieceColor.WHITE else -1
+        for dc in (-1, 1):
+            r, c = kr + pawn_dir, kc + dc
+            if 0 <= r < 8 and 0 <= c < 8:
+                p = board[r][c]
+                if p and p.color == enemy and p.type == PieceType.PAWN:
+                    return True
+
+        # 3) Knight attacks
+        knight_offsets = [
+            (-2, -1), (-2, 1), (-1, -2), (-1, 2),
+            (1, -2),  (1, 2),  (2, -1),  (2, 1)
+        ]
+        for dr, dc in knight_offsets:
+            r, c = kr + dr, kc + dc
+            if 0 <= r < 8 and 0 <= c < 8:
+                p = board[r][c]
+                if p and p.color == enemy and p.type == PieceType.KNIGHT:
+                    return True
+
+        # 4) Sliding pieces (rook / bishop / queen)
+        directions = [
+            (-1, 0), (1, 0), (0, -1), (0, 1),      # rook directions
+            (-1, -1), (-1, 1), (1, -1), (1, 1)     # bishop directions
+        ]
+
+        for dr, dc in directions:
+            r, c = kr + dr, kc + dc
+            while 0 <= r < 8 and 0 <= c < 8:
+                p = board[r][c]
+                if p:
+                    if p.color == enemy:
+                        if (
+                            (dr == 0 or dc == 0) and p.type in (PieceType.ROOK, PieceType.QUEEN)
+                            or
+                            (dr != 0 and dc != 0) and p.type in (PieceType.DARK_BISHOP, PieceType.LIGHT_BISHOP, PieceType.QUEEN)
+                        ):
+                            return True
+                    break
+                r += dr
+                c += dc
+
+        # 5) Enemy king (adjacent squares)
+        for dr in (-1, 0, 1):
+            for dc in (-1, 0, 1):
+                if dr == 0 and dc == 0:
+                    continue
+                r, c = kr + dr, kc + dc
+                if 0 <= r < 8 and 0 <= c < 8:
+                    p = board[r][c]
+                    if p and p.color == enemy and p.type == PieceType.KING:
+                        return True
+
         return False
     
     def get_attacked_squares(self, color: PieceColor) -> list[tuple[int,int]]:
@@ -77,27 +130,27 @@ class ChessBoard():
 
         return attacked_squares
 
-    def gen_valid_moves(self, turn: PieceColor,  CK: bool, CQ: bool, enpassant_square: tuple[int,int] | None = None) -> list[Move]:
+    def gen_valid_moves(self, turn: PieceColor, pieces: list[Piece], oppsPieces: list[Piece], CK: bool, CQ: bool, enpassant_square: tuple[int,int] | None = None) -> list[Move]:
         """
         Generate a list with all the valid moves for a given color in the current chess position.
         """
         valid_moves, moves = [], []
 
         # First get all the spatially possible captures and normal moves
-        for piece in self.board.flat:
-            if piece and piece.color == turn:
-                moves.extend(piece.get_moves(self.board))
+        for piece in pieces:
+            moves.extend(piece.get_moves(self.board))
 
         # Iterate over all the moves to check if they're valid.
         # First we apply the move in the board.
         # If the king is checked in the resulting board, the move isn't valid. 
         for move in moves:
-            piece_captured = self.apply_move(move)
+            pawn_promoted, piece_captured = self.apply_move(move)
             
-            if(not self.is_checked(turn)):
+            if(not self.is_checked(turn,pieces)):
                 valid_moves.append(move)
 
-            self.undo_move(move,piece_captured)
+            self.undo_move(move,pawn_promoted,piece_captured)
+
 
         """
         checking for available en passant captures
@@ -121,12 +174,12 @@ class ChessBoard():
 
                 enpassant_cap = Move((r,y,r+aux,c),MoveType.ENPASSANT)
 
-                pawn_captured = self.apply_move(enpassant_cap)
+                _ ,pawn_captured = self.apply_move(enpassant_cap)
 
-                if not self.is_checked(turn):   
+                if not self.is_checked(turn,pieces):   
                     valid_moves.append(enpassant_cap)
 
-                self.undo_move(enpassant_cap,pawn_captured)
+                self.undo_move(enpassant_cap,piece_captured=pawn_captured)
 
         """
         Checking for legal castling moves
@@ -160,7 +213,7 @@ class ChessBoard():
 
         return valid_moves                
 
-    def undo_move(self, move: Move, piece_captured: Piece | None = None) -> None:
+    def undo_move(self, move: Move, pawn_promoted: Piece | None = None ,piece_captured: Piece | None = None) -> None:
         """
         Undo a given chess move.
         """
@@ -168,7 +221,7 @@ class ChessBoard():
         
         # Put the piece back on the origin square and updates its position
         if(move.type == MoveType.PROMOTION_CAPTURE or move.type == MoveType.PROMOTION_NORMAL):
-            self.board[x][y] = create_piece(self.board[x2][y2].color,PieceType.PAWN,x,y)
+            self.board[x][y] = pawn_promoted
         else:
             self.board[x][y] = self.board[x2][y2]
             self.board[x][y].position = (x,y)
@@ -190,8 +243,7 @@ class ChessBoard():
             self.board[x][r_col].position = (x,r_col)
             self.board[x][y2+aux] = None
             
-
-    def apply_move(self, move: Move) -> None | Piece:
+    def apply_move(self, move: Move) -> tuple[Piece | None, Piece | None]:
         """
         Changes piece positions in order to apply the move.
         
@@ -200,15 +252,17 @@ class ChessBoard():
         (x,y,x2,y2) = move.coords
         piece = self.board[x][y]
         captured_piece = None
+        pawn_promoted = None
 
         # Emptying the square where the piece was
         self.board[x][y] = None
 
         match move.type:
             case MoveType.PROMOTION_NORMAL |  MoveType.PROMOTION_CAPTURE:
-                piece = create_piece(piece.color,move.promotion,x2,y2)
+                pawn_promoted = piece
                 if move.type == MoveType.PROMOTION_CAPTURE:
                     captured_piece = self.board[x2][y2]    
+                self.board[x2][y2] = create_piece(piece.color,move.promotion,x2,y2)
 
             case MoveType.CAPTURE:
                 captured_piece = self.board[x2][y2] 
@@ -228,11 +282,12 @@ class ChessBoard():
                 self.board[x][r_col] = None
                 self.board[x][r_col2].position = (x,r_col2)
         
-        # Putting the moving piece in the destination square
-        self.board[x2][y2] = piece 
-        self.board[x2][y2].position = (x2,y2)
+        if move.type != MoveType.PROMOTION_CAPTURE and move.type != MoveType.PROMOTION_NORMAL: 
+            # Putting the moving piece in the destination square
+            self.board[x2][y2] = piece 
+            self.board[x2][y2].position = (x2,y2)
 
-        return captured_piece
+        return pawn_promoted, captured_piece
 
     def print_board(self):
         """

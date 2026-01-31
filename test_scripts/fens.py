@@ -104,9 +104,6 @@ def chessgame_to_fen(game: ChessGame) -> str:
     if castling_rights == "":
         castling_rights = "-"
 
-    # enpassant_capture = next((move for move in game.validMoves if move.type == MoveType.ENPASSANT),None)
-    # enpassant_str = numCoord_to_chessCoord(*enpassant_capture.coords[2:]) if enpassant_capture else '-'
-
     lastMove = game.snapshots[-1].lastMove
 
     enpassant_str = '-'
@@ -200,8 +197,14 @@ def fen_to_chessgame(fen: str) -> ChessGame:
         
     castling_bools = (game.BK,game.BQ) if game.turn == PieceColor.BLACK else (game.WK,game.WQ)
     
+    pieces = [piece for piece in np_board.flat if piece and piece.color == turn]
+    oppsPieces = [piece for piece in np_board.flat if piece and piece.color != turn]
+
+    game.white.piecesLeft = [piece for piece in np_board.flat if piece and piece.color == PieceColor.WHITE]
+    game.black.piecesLeft = [piece for piece in np_board.flat if piece and piece.color == PieceColor.BLACK]
+
     game.board = ChessBoard(customBoard=np_board)
-    game.validMoves = game.board.gen_valid_moves(game.turn,*castling_bools,enpassant_coord)
+    game.validMoves = game.board.gen_valid_moves(game.turn,pieces,oppsPieces,*castling_bools,enpassant_coord)
     game.snapshots = [GameSnapshot(validMoves=game.validMoves,
                                       state=GameState.IN_PROGRESS,
                                       deadMoves=int(dead_moves),
@@ -210,8 +213,7 @@ def fen_to_chessgame(fen: str) -> ChessGame:
                                       BK=game.BK,
                                       BQ=game.BQ,
                                       lastMove=None)]
-    # game.white = None
-    # game.black = None
+    
     game.deadMoves = int(dead_moves)
     game.totalMoves = int(total_moves)
     game.state = GameState.IN_PROGRESS

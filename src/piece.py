@@ -31,6 +31,9 @@ class Move:
     type: MoveType
     promotion: Optional[PieceType] = None
 
+def is_capture(move: Move) -> bool:
+    return move.type == MoveType.CAPTURE or MoveType.ENPASSANT or MoveType.PROMOTION_CAPTURE 
+
 PIECE_VALUES: dict[PieceType, int] = {
     PieceType.PAWN: 1,
     PieceType.KNIGHT: 3,

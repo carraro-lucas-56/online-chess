@@ -48,7 +48,8 @@ def run_testcase(file_path):
         actual = [moveObj_to_moveName(move,move_objs,board.board) for move in move_objs]
 
         if set(actual) == set(expected):
-            print(f"test {i+1} passed")
+            pass
+            # print(f"test {i+1} passed")
         else:
             print(f"test {i} failed ")
             print(fen)

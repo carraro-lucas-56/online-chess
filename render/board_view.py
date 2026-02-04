@@ -1,10 +1,11 @@
 import pygame 
 from pygame.locals import *
 
+from utils.utils import is_light_square
 from src.chessgame import ChessGame
-from src.piece import Piece, PieceType, PieceColor
+from src.piece import Piece, PieceType, PieceColor, Move
 from assets import ImageCache
-from render.colors import WHITE, RED, GREEN
+from render.colors import WHITE, RED, GREEN, BRIGHT_YELLOW, CANARY_YELLOW
 
 class PieceImage:
     def __init__(self, pos, p_type, p_color, square_size):
@@ -59,14 +60,22 @@ class BoardImage:
             piece.update_position(r+aux*i,c,self.square_size)
             piece.draw(surface)
 
-    def draw(self, surface: pygame.Surface, highlighted_squares: tuple[int,int] | None = None):
+    def draw(self, surface: pygame.Surface, move: Move | None , selected_square: tuple[int,int] | None = None):
+        if move: 
+            (r,c) = move.coords[:2]
+            (r2,c2) = move.coords[2:]
+
         # Draw the squares
         for x in range(8):
             for y in range(8):
                 # Highlight selected square, if any
-                if (x,y) == highlighted_squares:
+                if (x,y) == selected_square:
                     pygame.draw.rect(surface,
                                      RED,
+                                     self.squares[x][y])
+                elif move and ((x,y) == (r,c) or (x,y) == (r2,c2)):
+                    pygame.draw.rect(surface,
+                                     BRIGHT_YELLOW if not is_light_square((x,y)) else CANARY_YELLOW,
                                      self.squares[x][y])
                 else:
                     pygame.draw.rect(surface,

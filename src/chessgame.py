@@ -267,7 +267,7 @@ class ChessGame():
             case MoveType.CAPTURE | MoveType.ENPASSANT:
                 p1.score += PIECE_VALUES[piece_captured.type]
 
-    def _undo_player_data (self, pawn_promoted: Piece, piece_captured: Piece | None, move: Move) -> None:  
+    def _undo_player_data (self, pawn_promoted: Piece | None, piece_captured: Piece | None, move: Move) -> None:  
         """
         Updates player data after undoing the give move.
 
@@ -283,6 +283,7 @@ class ChessGame():
         match move.type:
             case MoveType.PROMOTION_NORMAL | MoveType.PROMOTION_CAPTURE:
                 prom_piece = self.board.board[move.coords[2]][move.coords[3]]
+
                 p1.remove_piece(prom_piece)
                 p1.add_piece(pawn_promoted)
                 p1.score -= PIECE_VALUES[move.promotion]-1
@@ -452,14 +453,10 @@ class ChessGame():
                                          if self.turn == PieceColor.BLACK 
                                          else (self.white.piecesLeft,self.black.piecesLeft,self.WK,self.WQ))
 
-        # s = time.perf_counter()
         self.validMoves = self.board.gen_valid_moves(self.turn,pieces,oppsPieces,CK,CQ,self.enpassantSquare)
-        # e = time.perf_counter()
-        # print(f"{(e-s):.5f}") 
 
         # Checks if the game ended
         self._update_state(search_mode=search_mode)
-
 
         self.snapshots.append(GameSnapshot(lastMove=move,
                                            deadMoves=self.deadMoves,
@@ -497,13 +494,13 @@ class ChessGame():
 
         move = self.snapshots[-1].lastMove
 
-        piece_captured  = self.snapshots[-1].piece_captured
+        piece_captured = self.snapshots[-1].piece_captured
         
         pawn_promoted = self.snapshots[-1].pawn_promoted
 
-        self.board.undo_move(move,pawn_promoted,piece_captured)
-
         self._undo_player_data(pawn_promoted,piece_captured,move)
+
+        self.board.undo_move(move,pawn_promoted,piece_captured)
 
         self.enpassantSquare = prev_state.enpassantSquare
 
@@ -519,12 +516,3 @@ class ChessGame():
         if pop:
             self.snapshots.pop()
 
-if __name__ == "__main__":
-    import time
-    game = ChessGame()
-    game.start_game()
-    # s = time.perf_counter()
-    game.play_move(6,4,4,4)
-    # game.unplay_move()
-    # e = time.perf_counter()
-    # print(f"{(e-s):.5f} seg")

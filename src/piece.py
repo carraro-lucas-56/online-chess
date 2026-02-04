@@ -17,13 +17,13 @@ class MoveType(Enum):
     PROMOTION_CAPTURE = 6
 
 class PieceType(Enum):
-    PAWN = "P"
-    KNIGHT = "N"
-    LIGHT_BISHOP = "LB"
-    DARK_BISHOP = "DB"
-    ROOK = "R"
-    QUEEN = "Q"
-    KING = "K"
+    PAWN = 1
+    KNIGHT = 2
+    LIGHT_BISHOP = 3
+    DARK_BISHOP = 3
+    ROOK = 4
+    QUEEN = 5
+    KING = 6
 
 @dataclass
 class Move:
@@ -114,7 +114,7 @@ class Piece(ABC):
             # stop, we found another piece 
             else:
                 # if it's an opposing piece add the capture move
-                if board[r+x][c+y].color != self.color: # and type(board[r+x][c+y] != King):
+                if board[r+x][c+y].color != self.color: 
                     moves.append(Move((r,c,r+x,c+y),MoveType.CAPTURE)) 
 
                 # change the direction we're exploring

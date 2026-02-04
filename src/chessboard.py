@@ -1,13 +1,12 @@
 import numpy as np
-import time
 
 from .piece import (Piece, PieceType, PieceColor,  
                        Move, MoveType, create_piece)
 
 class ChessBoard():
     def __init__(self,customBoard: np.ndarray | None = None):
-        self.__white_back_rank_layout = ['R','N','DB','Q','K','LB','N','R']
-        self.__black_back_rank_layout = ['R','N','LB','Q','K','DB','N','R']
+        self.__white_back_rank_layout = [PieceType.ROOK,PieceType.KNIGHT,PieceType.DARK_BISHOP,PieceType.QUEEN,PieceType.KING,PieceType.LIGHT_BISHOP,PieceType.KNIGHT,PieceType.ROOK]
+        self.__black_back_rank_layout = [PieceType.ROOK,PieceType.KNIGHT,PieceType.LIGHT_BISHOP,PieceType.QUEEN,PieceType.KING,PieceType.DARK_BISHOP,PieceType.KNIGHT,PieceType.ROOK]
         self.board = customBoard if not customBoard is None else self._initial_position()  
 
     @property
@@ -24,13 +23,13 @@ class ChessBoard():
         
         # Place black pieces (row 0 and row 1)
         for y, piece_type in enumerate(self.black_back_rank_layout):
-            board[0, y] = create_piece(PieceColor.BLACK, PieceType(piece_type), 0, y)
+            board[0, y] = create_piece(PieceColor.BLACK, piece_type, 0, y)
         board[1] = [create_piece(PieceColor.BLACK, PieceType.PAWN, 1, y) for y in range(8)]
         
         # Place white pieces (row 6 and row 7)
         board[6] = [create_piece(PieceColor.WHITE, PieceType.PAWN, 6, y) for y in range(8)]
         for y, piece_type in enumerate(self.white_back_rank_layout):
-            board[7, y] = create_piece(PieceColor.WHITE, PieceType(piece_type), 7, y)
+            board[7, y] = create_piece(PieceColor.WHITE, piece_type, 7, y)
         
         return board
 
@@ -150,7 +149,6 @@ class ChessBoard():
                 valid_moves.append(move)
 
             self.undo_move(move,pawn_promoted,piece_captured)
-
 
         """
         checking for available en passant captures

@@ -1,5 +1,5 @@
 from test_scripts.fens import fen_to_chessgame
-from src.piece import PieceColor
+from chess.piece import PieceColor
 
 # Chess positions where checkmate is impossible even with cooperation.
 fens = [

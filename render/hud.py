@@ -1,8 +1,9 @@
 import pygame
 
-from src.chessgame import ChessGame, PieceColor, Piece
+from chess.piece import PieceColor, Piece
+from chess.chessgame import ChessGame, GameState
 from render.board_view import PieceImage
-from render.colors import WHITE
+from render.colors import WHITE, BLACK
 
 class ClockView:
     def __init__(self, pos):
@@ -55,18 +56,33 @@ class PiecesCapturedView():
             piece.draw(surface)
 
 class Hud:
-    def __init__(self, game: ChessGame, square_size: int):
+    def __init__(self, game: ChessGame, perspective: PieceColor ,square_size: int):
         self.square_size = square_size
-        self.black_clock = ClockView((180, 90))
-        self.white_clock = ClockView((180, 130 + 8*square_size+ 20))
-        self.score = ScoreView(pos_white=(180+7.5*self.square_size,130+8*self.square_size+20),
-                               pos_black=(180+7.5*self.square_size,90))
-        self.white_pieces_capt = PiecesCapturedView(pos=(400,130+8*self.square_size+20),
-                                                    p_color=PieceColor.BLACK,
-                                                    squre_size=(30,30))
-        self.black_pieces_capt = PiecesCapturedView(pos=(400,90),
-                                                    p_color=PieceColor.WHITE,
-                                                    squre_size=(30,30))
+        self.perspective = perspective
+
+        if perspective == PieceColor.WHITE:
+            self.black_clock = ClockView((180, 90))
+            self.white_clock = ClockView((180, 130 + 8*square_size+ 20))
+            self.score = ScoreView(pos_white=(180+7.5*self.square_size,130+8*self.square_size+20),
+                                   pos_black=(180+7.5*self.square_size,90))
+            self.white_pieces_capt = PiecesCapturedView(pos=(400,130+8*self.square_size+20),
+                                                        p_color=PieceColor.BLACK,
+                                                        squre_size=(30,30))
+            self.black_pieces_capt = PiecesCapturedView(pos=(400,90),
+                                                        p_color=PieceColor.WHITE,
+                                                        squre_size=(30,30))
+        else:   
+            self.white_clock = ClockView((180, 90))
+            self.black_clock = ClockView((180, 130 + 8*square_size+ 20))
+            self.score = ScoreView(pos_black=(180+7.5*self.square_size,130+8*self.square_size+20),
+                                   pos_white=(180+7.5*self.square_size,90))
+            self.black_pieces_capt = PiecesCapturedView(pos=(400,130+8*self.square_size+20),
+                                                        p_color=PieceColor.WHITE,
+                                                        squre_size=(30,30))
+            self.white_pieces_capt = PiecesCapturedView(pos=(400,90),
+                                                        p_color=PieceColor.BLACK,
+                                                        squre_size=(30,30))
+
         self.game = game
 
     def draw(self, surface: pygame.Surface) -> None:
@@ -80,10 +96,26 @@ class Hud:
         self.white_pieces_capt.draw(surface,self.game.white.piecesCaptured)
         self.black_pieces_capt.draw(surface,self.game.black.piecesCaptured)
 
-    def draw_game_result(self,suface: pygame.Surface, square_size: int):
-        text = self.game.state.name
-        font = pygame.font.Font(None, 18)
+        font = pygame.font.Font(None, 40)
+        text = "Press q to quit"
 
-        img = font.render(text, True, WHITE)
-        suface.blit(img, (180+8*square_size+10,500))
+        img = font.render(text, True, BLACK)
+        surface.blit(img, (700,50))
+            
+        # Draws game result (if the game is finished)
+        if self.game.state != GameState.IN_PROGRESS:
+            match self.game.state:
+                case GameState.CHACKMATE:
+                    result = "lost" if self.game.turn == self.perspective else "won"
+                    text = f"You {result} by Checkmate"
+                case GameState.TIMEOUT:
+                    result = "lost" if self.game.turn != self.perspective else "won"
+                    text = f"You {result} on time"
+                case _:
+                    text = f"Draw by {self.game.state.name}"
+
+            font = pygame.font.Font(None, 40)
+
+            img = font.render(text, True, BLACK)
+            surface.blit(img, (350,840))
             

@@ -472,6 +472,8 @@ class ChessGame():
 
         self.update_hash()
 
+        return move
+
     def unplay_move(self, pop: bool=True, search_mode: bool = False) -> None:
         """
         Restore the game overall state back to how it was before the last move played.

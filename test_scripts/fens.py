@@ -3,9 +3,9 @@ import numpy as np
 from dotenv import load_dotenv
 from functools import reduce
 
-from src.piece import Piece, PieceType, Move, MoveType, Queen, Rook, King, Knight, Bishop, Pawn, PieceColor
-from src.chessgame import ChessGame, GameSnapshot, GameState
-from src.chessboard import ChessBoard
+from chess.piece import Piece, PieceType, Move, MoveType, Queen, Rook, King, Knight, Bishop, Pawn, PieceColor
+from chess.chessgame import ChessGame, GameSnapshot, GameState
+from chess.chessboard import ChessBoard
 
 load_dotenv()
 ROOT_DIR = os.getenv("ROOT_DIR")

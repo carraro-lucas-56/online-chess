@@ -59,6 +59,7 @@ class Hud:
     def __init__(self, game: ChessGame, perspective: PieceColor ,square_size: int):
         self.square_size = square_size
         self.perspective = perspective
+        self.font = pygame.font.Font(None, 36)
 
         if perspective == PieceColor.WHITE:
             self.black_clock = ClockView((180, 90))
@@ -85,6 +86,7 @@ class Hud:
 
         self.game = game
 
+    
     def draw(self, surface: pygame.Surface) -> None:
         self.white_clock.draw(surface, self.game.white.time_left)
         self.black_clock.draw(surface, self.game.black.time_left)

@@ -7,6 +7,11 @@ from dotenv import load_dotenv
 
 from chess.piece import PieceColor, Move
 
+logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+
 logger = logging.getLogger(__name__)
 
 load_dotenv()

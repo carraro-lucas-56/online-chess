@@ -67,7 +67,8 @@ class ChessGame():
 
         # State attributes
         self.state = GameState.READY_TO_START
-        self.snapshots = [GameSnapshot(validMoves=self.validMoves,state=self.state)]
+        self.snapshots = [GameSnapshot(validMoves=self.validMoves,
+                                       state=GameState.IN_PROGRESS)]
 
         self.gen_random_attr_keys()
         self.init_zobrist()
@@ -144,7 +145,7 @@ class ChessGame():
         self.turn = PieceColor.WHITE
         self.validMoves = self.board.gen_valid_moves(self.turn)
         self.snapshots = [GameSnapshot(validMoves=self.validMoves,
-                                       state=self.state)]
+                                       state=GameState.IN_PROGRESS)]
         self.state = GameState.READY_TO_START
         self.BQ = True
         self.BK = True

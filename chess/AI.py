@@ -44,12 +44,12 @@ BISHOP_PST_WHITE = [
 
 ROOK_PST_WHITE = [
      0,  0,  0,  5,  5,  0,  0,  0,
+    -5, 10, 10, 10, 10, 10, 10, -5,
     -5,  0,  0,  0,  0,  0,  0, -5,
     -5,  0,  0,  0,  0,  0,  0, -5,
     -5,  0,  0,  0,  0,  0,  0, -5,
     -5,  0,  0,  0,  0,  0,  0, -5,
-    -5,  0,  0,  0,  0,  0,  0, -5,
-     5, 10, 10, 10, 10, 10, 10,  5,
+     5,  0,  0,  0,  0,  0,  0,  5,
      0,  0,  0,  0,  0,  0,  0,  0,
 ]
 
@@ -117,9 +117,10 @@ class Engine:
         self.MAX_DEPTH = 4
         self.TT = {}
         self.nodes_visited = 0  
-        self.thread = None  
+        self.thread = None 
+        self.stop_event = threading.Event() 
         self.thinking = threading.Event()
-        self.move_queue = queue.Queue()
+        self.queue = queue.Queue()
         self.PST = [
         # WHITE
         [
@@ -268,23 +269,21 @@ class Engine:
 
         for piece in game.white.piecesLeft:
             (x,y) = piece.position
-            score += self.PST[0][piece.type.value-1][(x+1)*(y+1)-1]          
+            score += self.PST[0][piece.type.value-1][x*8 + y]          
 
         for piece in game.black.piecesLeft:
             (x,y) = piece.position
-            score += self.PST[1][piece.type.value-1][(x+1)*(y+1)-1]          
+            score += self.PST[1][piece.type.value-1][x*8 + y]          
 
         return score    
 
-    def start_engine_thread(self, snapshot: ChessGame, stop_event: threading.Event):
+    def start_thread(self, snapshot: ChessGame):
         self.thread = threading.Thread(target=self.gen_best_move,
-                                              args=[snapshot,stop_event],
+                                              args=[snapshot],
                                               daemon=True)
         self.thread.start()
 
-    def gen_best_move(self,
-                          game_snapshot: ChessGame, 
-                          stop_event: threading.Event) -> None:
+    def gen_best_move(self, game_snapshot: ChessGame) -> None:
         """
         Trigger alpha beta pruning algorithm and put the generated move into the engine's queue.
         """
@@ -292,16 +291,16 @@ class Engine:
         self.thinking.set()
 
         try:
-            if stop_event.is_set():
+            if self.stop_event.is_set():
                 return
 
             for depth in range(1,self.MAX_DEPTH+1):
-                engine_move = self.alpha_beta_root(game_snapshot,False,max_depth=depth)
+                engine_move = self.alpha_beta_root(game_snapshot,game_snapshot.turn==PieceColor.WHITE,max_depth=depth)
 
-            if stop_event.is_set():
+            if self.stop_event.is_set():
                 return
 
-            self.move_queue.put(engine_move)
+            self.queue.put(engine_move)
             
         except Exception as e:
             logger.error(f"Engine Therad crashed {e}")

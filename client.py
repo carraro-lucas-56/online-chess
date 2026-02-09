@@ -1,13 +1,13 @@
-import sys, os
+import sys
 import threading
 import copy
 import queue
+import logging
 
 import  pygame
 from pygame.locals import *
-from dotenv import load_dotenv
 
-from assets import ImageCache
+from assets import load_assets
 from chess.chessgame import ChessGame, GameState, InvalidMove, GameNotInProgress
 from chess.piece import PieceColor, PieceType, Move
 from render.board_view import BoardImage, PieceImage, to_board_coords
@@ -15,11 +15,13 @@ from render.colors import BLACK, GREY
 from render.hud import Hud
 from render.menu import GameMenu
 from chess.AI import Engine
-from utils.utils import is_light_square
+from utils.utils import is_light_square, in_bound
 from network import Network
 
-load_dotenv()
-ROOT_DIR = os.getenv("ROOT_DIR")
+logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
 
 # =======================================================
 # ------------------ USEFUL FUNCTIONS -------------------
@@ -71,38 +73,13 @@ def coord_to_piece(col: int, x: int, y: int, turn: PieceColor) -> PieceType | No
 
     return None
 
-def toggle_robot_move(game_snapshot: ChessGame, 
-                      q: queue, 
-                      thinking: threading.Event, 
-                      stop_event: threading.Event, 
-                      engine: Engine) -> None:
-    """
-    Trigger alpha beta pruning algorithm and put the generated move into the given queue.
-    """
-    
-    thinking.set()
-    
-    try:
-        if stop_event.is_set():
-            return
-
-        for depth in range(1,engine.MAX_DEPTH+1):
-            engine_move = engine.alpha_beta_root(game_snapshot,False,max_depth=depth)
-        
-        if stop_event.is_set():
-            return
-        
-        q.put(engine_move)
-    finally:
-        thinking.clear()
-
 def get_opp_move(q: queue, 
                  waiting: threading.Event, 
                  stop_event: threading.Event,
                  n: Network,
                  lastMove: Move | None) -> None:
     """
-    Trigger alpha beta pruning algorithm and put the generated move into the given queue.
+    Sends the last move made and gets the opponent's next move.
     """
     
     waiting.set()
@@ -119,12 +96,6 @@ def get_opp_move(q: queue,
         
     finally:
         waiting.clear()
-
-def load_assets():
-    for color in ("white", "black"):
-            for piece in ("pawn", "rook", "knight", "bishop", "queen", "king"):
-                name = f"{color}-{piece}"
-                ImageCache.load(name, f"{ROOT_DIR}/images/{name}.png")
 
 # =======================================================
 # --------------- GAME LOOP FUNCTIONS -------------------
@@ -149,11 +120,8 @@ def play_bot_loop() -> None:
     # Variable to save which piece the user wants to promote to
     prom_piece = None 
 
-    thinking = threading.Event()
     stop_event = threading.Event()
-    ai_thread = None
 
-    q = queue.Queue()
     engine = Engine()
 
     quit = False
@@ -194,7 +162,7 @@ def play_bot_loop() -> None:
         # Applies selected move
         if None not in (r, c, r2, c2) and not quit:
             # Engine's turn
-            if thinking.is_set():
+            if engine.thinking.is_set():
                 r = c = r2 = c2 = None
 
             # Checks if the user is trying to perform a valid promotion.
@@ -206,34 +174,28 @@ def play_bot_loop() -> None:
             # -> The user is trying to perfrom a promotion and already selected a piece to promote to. 
             elif not prom_happening or prom_piece:
                 try:
-                    game.play_move(r,c,r2,c2,prom_piece)
+                    game.play_move_coords(r,c,r2,c2,prom_piece)
                     boardImage.pieces = [PieceImage.from_piece_obj(piece,user_color,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
                     # Start thread to get the engine's move
-                    if game.state == GameState.IN_PROGRESS and (ai_thread is None or not ai_thread.is_alive()):
+                    if game.state == GameState.IN_PROGRESS and (engine.thread is None or not engine.thread.is_alive()):
                         snapshot = copy.deepcopy(game)
-                        ai_thread = threading.Thread(target=toggle_robot_move,
-                                                     args=[snapshot,q,thinking,stop_event,engine],
-                                                     daemon=True)
-                        ai_thread.start()
-                except GameNotInProgress:
+                        engine.start_engine_thread(snapshot,stop_event)
+                except (GameNotInProgress, InvalidMove):
                     pass
-                except InvalidMove:
-                    pass
+
                 if prom_happening:
                     prom_happening = False
                     prom_piece = None
                 r = c = r2 = c2 = None
 
         # Applies engine move
-        if not q.empty():
+        if not engine.move_queue.empty():
             try:
-                engine_move = q.get_nowait()
-                game.play_move(*engine_move.coords,engine_move.promotion)
+                engine_move = engine.move_queue.get_nowait()
+                game.play_move(engine_move)
                 boardImage.pieces = [PieceImage.from_piece_obj(piece,user_color,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
                 r = c = r2 = c2 = None
-            except GameNotInProgress:
-                pass
-            except InvalidMove:
+            except (GameNotInProgress, InvalidMove):
                 pass
 
         boardImage.draw(DISPLAYSURF,game.snapshots[-1].lastMove,selected_square=(r,c))
@@ -268,10 +230,12 @@ def play_online_loop() -> None:
     # Variable to save which piece the user wants to promote to
     prom_piece = None 
 
+    # Threading variables
     waiting = threading.Event()
     stop_event = threading.Event()
     opp_thread = None
 
+    # Queue for storing opponent's move
     q = queue.Queue()
 
     quit = False
@@ -310,7 +274,7 @@ def play_online_loop() -> None:
                 row, col = to_board_coords(row,col,user_color)
 
                 # Checks if a non-square coord was clicked 
-                if row < 0 or row > 7 or col < 0 or col > 7:
+                if not in_bound(row,col):
                     continue
                 
                 # If a promotion is happening, checks if the user selected a piece to promote to 
@@ -323,7 +287,7 @@ def play_online_loop() -> None:
                     r,c = row, col
 
         # Applies selected move
-        if None not in (r, c, r2, c2) and not quit and game.turn == user_color and game.state == GameState.IN_PROGRESS:
+        if None not in (r, c, r2, c2) and not quit and not waiting.is_set() and game.state == GameState.IN_PROGRESS:
             # Checks if the user is trying to perform a valid promotion.
             if not prom_happening and can_toggle_promotion(game,r,c,r2,c2):
                 prom_happening = True
@@ -333,7 +297,9 @@ def play_online_loop() -> None:
             # -> The user is trying to perfrom a promotion and already selected a piece to promote to. 
             elif not prom_happening or prom_piece:
                 try:
-                    move = game.play_move(r,c,r2,c2,prom_piece)
+                    move = game.play_move_coords(r,c,r2,c2,prom_piece)
+                    
+                    # Starts thread to get the opponet's move
                     if (opp_thread is None or not opp_thread.is_alive()):
                         opp_thread = threading.Thread(target=get_opp_move,
                                                      args=[q,waiting,stop_event,n,move],
@@ -341,10 +307,9 @@ def play_online_loop() -> None:
                         opp_thread.start()
                     boardImage.pieces = [PieceImage.from_piece_obj(piece,user_color,(SQUARE_SIZE,SQUARE_SIZE)) 
                                                 for piece in game.board.board.flat if piece]            
-                except GameNotInProgress:
+                except (GameNotInProgress, InvalidMove):
                     pass
-                except InvalidMove:
-                    pass
+
                 if prom_happening:
                     prom_happening = False
                     prom_piece = None
@@ -354,14 +319,11 @@ def play_online_loop() -> None:
         if not q.empty():
             try:
                 opp_move = q.get_nowait()
-                game.play_move(*opp_move.coords,opp_move.promotion)
+                game.play_move(opp_move)
                 boardImage.pieces = [PieceImage.from_piece_obj(piece,user_color,(SQUARE_SIZE,SQUARE_SIZE)) for piece in game.board.board.flat if piece]            
                 r = c = r2 = c2 = None
-            except GameNotInProgress:
+            except (GameNotInProgress, InvalidMove):
                 pass
-            except InvalidMove:
-                pass
-
 
         boardImage.draw(DISPLAYSURF,game.snapshots[-1].lastMove,selected_square=(r,c))
         hud.draw(DISPLAYSURF)

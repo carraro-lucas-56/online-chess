@@ -2,10 +2,13 @@ import numpy as np
 import itertools
 from enum import Enum
 from dataclasses import dataclass
+import logging
 
 from .piece import Piece, PieceType, PieceColor, Move, MoveType, PIECE_VALUES
 from .chessboard import ChessBoard
 from .player import Player
+
+logger = logging.getLogger(__name__)
 
 class GameError(Exception):
     pass
@@ -96,7 +99,7 @@ class ChessGame():
         for item in ["WK","WQ","BK","BQ"]:
             self.castlingKeys[item] = rng.integers(0,max,dtype=np.uint64)
         
-        # Assigning random number for each file (usefull for en passant squares)
+        # Assigning random number for each board row (usefull for en passant squares)
         self.enpassantKeys = {}
         for x in range(8):
             self.enpassantKeys[x] = rng.integers(0,max,dtype=np.uint64)
@@ -141,7 +144,7 @@ class ChessGame():
         self.turn = PieceColor.WHITE
         self.validMoves = self.board.gen_valid_moves(self.turn)
         self.snapshots = [GameSnapshot(validMoves=self.validMoves,
-                                          state=self.state)]
+                                       state=self.state)]
         self.state = GameState.READY_TO_START
         self.BQ = True
         self.BK = True
@@ -241,54 +244,49 @@ class ChessGame():
         elif player.time_left <= 0:
             self.state = GameState.TIMEOUT
 
-    def _update_player_data(self, pawn_promoted: Piece | None, piece_captured: Piece | None ,move: Move) -> None:
+    def _update_player_data(self, pawn_promoted: Piece | None, 
+                            piece_captured: Piece | None ,
+                            move: Move, 
+                            undo: bool = False) -> None:
         """
         Updates players's data based on the provided move.
+
+        Must be called AFTER the give move is made or BEFORE the given move is undone. 
         
         p1 is the player who performed the move.
         We suppose that the move is valid.
 
-        pawn_promoted is the piece that was in the origin square before the move was done.
+        pawn_promoted is a pawn who performed a promotion move.
+        piece_captured is a piece that was captured in the move.
         """
 
         (p1,p2) = ((self.white,self.black) if self.turn == PieceColor.WHITE 
                                            else (self.black,self.white))
 
-        if(piece_captured):
-            p1.add_captured_piece(piece_captured)
-            p2.remove_piece(piece_captured)
+        sign = -1 if undo else 1
+
+        if piece_captured:
+            if undo:        
+                p1.remove_captured_piece()
+                p2.add_piece(piece_captured)
+            else:
+                p1.add_captured_piece(piece_captured)
+                p2.remove_piece(piece_captured)
 
         match move.type:
             case MoveType.PROMOTION_NORMAL | MoveType.PROMOTION_CAPTURE:
                 prom_piece = self.board.board[move.coords[2]][move.coords[3]]
-                p1.add_piece(prom_piece)
-                p1.remove_piece(pawn_promoted)
-                p1.score += PIECE_VALUES[move.promotion]-1
+                
+                if undo:
+                    p1.add_piece(pawn_promoted)
+                    p1.remove_piece(prom_piece)
+                else:
+                    p1.add_piece(prom_piece)
+                    p1.remove_piece(pawn_promoted)
+
+                p1.score += sign*PIECE_VALUES[move.promotion]-1
             case MoveType.CAPTURE | MoveType.ENPASSANT:
-                p1.score += PIECE_VALUES[piece_captured.type]
-
-    def _undo_player_data (self, pawn_promoted: Piece | None, piece_captured: Piece | None, move: Move) -> None:  
-        """
-        Updates player data after undoing the give move.
-
-        piece_moved is the piece that was in the destination square BEFORE the move was undone in the board.
-        """
-        (p1,p2) = ((self.white,self.black) if self.turn == PieceColor.WHITE 
-                                           else (self.black,self.white))
-
-        if piece_captured:        
-            p1.remove_captured_piece()
-            p2.add_piece(piece_captured)
-
-        match move.type:
-            case MoveType.PROMOTION_NORMAL | MoveType.PROMOTION_CAPTURE:
-                prom_piece = self.board.board[move.coords[2]][move.coords[3]]
-
-                p1.remove_piece(prom_piece)
-                p1.add_piece(pawn_promoted)
-                p1.score -= PIECE_VALUES[move.promotion]-1
-            case MoveType.CAPTURE | MoveType.ENPASSANT:
-                p1.score -= PIECE_VALUES[piece_captured.type]
+                p1.score += sign*PIECE_VALUES[piece_captured.type]
 
     def _update_castling_rights(self, move: Move) -> None:
         """
@@ -301,13 +299,14 @@ class ChessGame():
         piece = self.board.board[x][y]
 
         if self.turn == PieceColor.WHITE:
+            # Case When we're losing castling rights due to rook/king movement
             if (self.WK and (piece.type == PieceType.KING or (piece.type == PieceType.ROOK and y == 7))):
                 self.WK = False
 
             if (self.WQ and (piece.type == PieceType.KING or (piece.type == PieceType.ROOK and y == 0))):
                 self.WQ = False
 
-            # Case when we are capturing the opponent's rook
+            # Case when the opponent is losing castling rights cause one of its rook's are being captured
             if (self.BK and (x2,y2) == (0,7)):
                 self.BK = False
             
@@ -315,13 +314,14 @@ class ChessGame():
                 self.BQ = False
 
         else:
+            # Case When we're losing castling rights due to rook/king movement
             if (self.BK and (piece.type == PieceType.KING or (piece.type == PieceType.ROOK and y == 7))):
                 self.BK = False
 
             if (self.BQ and (piece.type == PieceType.KING or (piece.type == PieceType.ROOK and y == 0))):
                 self.BQ = False
 
-            # Case when we are capturing the opponent's rook
+            # Case when the opponent is losing castling rights cause one of its rook's are being captured
             if (self.WK and (x2,y2) == (7,7)):
                 self.WK = False
             
@@ -400,12 +400,12 @@ class ChessGame():
 # ----- FUNCTIONS PERFORM AND UNDO MOVES IN THE GAME -----
 # ========================================================
 
-    def play_move(self, x: int, y: int, x2: int, y2: int, 
-                  prom_piece: PieceType | None = None, 
-                  search_mode=False, 
-                  move_obj: Move | None = None) -> Move:
+    def play_move(self,
+                  move: Move,
+                  *, 
+                  search_mode: bool = False) -> Move:
         """
-        Validates and applies a move given by board coordinates.
+        Applies a given move, must receive a valid move.
 
         Handles promotion resolution, updates player clocks, applies the move
         to the board, switches turn, regenerates legal moves, and updates
@@ -413,18 +413,12 @@ class ChessGame():
         """
         
         if self.state != GameState.IN_PROGRESS:
+            logger.warning("play_move called when game is not in progress")
             raise GameNotInProgress
-
-        # Checking which move matches the given coordinates
-        move = (move_obj if move_obj
-                else next((m for m in self.validMoves if m.coords == (x,y,x2,y2) and m.promotion == prom_piece),None))
-
-        if move is None:
-            raise InvalidMove
 
         self._update_castling_rights(move)            
         
-        move.coords = (x,y,x2,y2)
+        (x,y,x2,y2) = move.coords
         piece_moved = self.board.board[x][y]
 
         # Checking if the move is a two square pawn advance
@@ -443,6 +437,7 @@ class ChessGame():
         if self.turn == PieceColor.BLACK:
             self.totalMoves += 1
 
+        # Actually applies the move in the board object
         pawn_promoted, piece_captured = self.board.apply_move(move)
         
         self._update_player_data(pawn_promoted,piece_captured,move)
@@ -474,7 +469,36 @@ class ChessGame():
 
         return move
 
-    def unplay_move(self, pop: bool=True, search_mode: bool = False) -> None:
+    def play_move_coords(
+        self,
+        x: int,
+        y: int,
+        x2: int,
+        y2: int,
+        prom_piece: PieceType | None = None,
+        *,
+        search_mode: bool = False
+    ) -> Move:
+        """
+        Helper function to apply a move given it's board coordinates.
+        """
+        if self.state != GameState.IN_PROGRESS:
+            logger.warning("play_move_coords called when game is not in progress")
+            raise GameNotInProgress
+
+        move = next(
+            (m for m in self.validMoves
+             if m.coords == (x, y, x2, y2) and m.promotion == prom_piece),
+            None
+        )
+
+        if move is None:
+            logger.warning("play_move called with an invalid move")
+            raise InvalidMove
+
+        return self.play_move(move, search_mode=search_mode)
+
+    def unplay_move(self, *,pop: bool=True, search_mode: bool = False) -> None:
         """
         Restore the game overall state back to how it was before the last move played.
         """
@@ -486,7 +510,7 @@ class ChessGame():
         self.update_hash()
 
         self._change_turn()
-        
+
         prev_state = self.snapshots[-2]
 
         self.BK = prev_state.BK 
@@ -500,7 +524,8 @@ class ChessGame():
         
         pawn_promoted = self.snapshots[-1].pawn_promoted
 
-        self._undo_player_data(pawn_promoted,piece_captured,move)
+        self._update_player_data(pawn_promoted,piece_captured,move,undo=True)
+        # self._undo_player_data(pawn_promoted,piece_captured,move)        
 
         self.board.undo_move(move,pawn_promoted,piece_captured)
 

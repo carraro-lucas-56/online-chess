@@ -34,8 +34,9 @@ class Player:
         except:
             pass
 
-    def add_piece(self, piece: Piece) -> None:
-        self.piecesLeft.append(piece)
+    def add_piece(self, piece: Piece | None) -> None:
+        if piece:
+            self.piecesLeft.append(piece)
 
     def remove_captured_piece(self) -> None:
         try:

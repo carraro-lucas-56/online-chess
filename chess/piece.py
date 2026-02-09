@@ -25,7 +25,7 @@ class PieceType(Enum):
     QUEEN = 5
     KING = 6
 
-@dataclass
+@dataclass(frozen=True)
 class Move:
     coords: tuple[int,int,int,int]
     type: MoveType
@@ -135,10 +135,10 @@ class Pawn(Piece):
         """
         Returns the coordinates of all the squares that the pawn is attacking
         """
-        aux = 1 if self.color == PieceColor.BLACK else -1
+        sign = 1 if self.color == PieceColor.BLACK else -1
         (r,c) = self.position
 
-        return [(x,y) for (x,y) in [(r+aux,c-1),(r+aux,c+1)] if in_bound(x,y)]
+        return [(x,y) for (x,y) in [(r+sign,c-1),(r+sign,c+1)] if in_bound(x,y)]
 
     @classmethod
     def prom_pieces(cls,t: tuple[int,int]) -> list[PieceType]:
@@ -158,26 +158,26 @@ class Pawn(Piece):
         (r,c) = self.position
 
         # aux helps with board orientation
-        aux = 1 if self.color == PieceColor.BLACK else -1
+        sign = 1 if self.color == PieceColor.BLACK else -1
 
         # Checks the condtions to promote with a capture in the left up square
-        if (in_bound(r+aux,c-1) 
-            and board[r+aux][c-1] 
-            and board[r+aux][c-1].color != self.color):
-            moves.extend([Move((r,c,r+aux,c-1,),MoveType.PROMOTION_CAPTURE,p_type) 
-                          for p_type in self.prom_pieces((r+aux,c-1))])
+        if (in_bound(r+sign,c-1) 
+            and board[r+sign][c-1] 
+            and board[r+sign][c-1].color != self.color):
+            moves.extend([Move((r,c,r+sign,c-1,),MoveType.PROMOTION_CAPTURE,p_type) 
+                          for p_type in self.prom_pieces((r+sign,c-1))])
 
         # Checks the condtions to promote with a capture in the right up square
-        if (in_bound(r+aux,c+1) 
-            and board[r+aux][c+1] 
-            and board[r+aux][c+1].color != self.color):
-            moves.extend([Move((r,c,r+aux,c+1,),MoveType.PROMOTION_CAPTURE,p_type) 
-                          for p_type in self.prom_pieces((r+aux,c+1))])
+        if (in_bound(r+sign,c+1) 
+            and board[r+sign][c+1] 
+            and board[r+sign][c+1].color != self.color):
+            moves.extend([Move((r,c,r+sign,c+1,),MoveType.PROMOTION_CAPTURE,p_type) 
+                          for p_type in self.prom_pieces((r+sign,c+1))])
 
         # Checks if we can go one square up
-        if in_bound(r+aux,c) and board[r+aux][c] is None:
-            moves.extend([Move((r,c,r+aux,c,),MoveType.PROMOTION_NORMAL,p_type) 
-                          for p_type in self.prom_pieces((r+aux,c))])
+        if in_bound(r+sign,c) and board[r+sign][c] is None:
+            moves.extend([Move((r,c,r+sign,c,),MoveType.PROMOTION_NORMAL,p_type) 
+                          for p_type in self.prom_pieces((r+sign,c))])
             
         return moves
 
@@ -190,28 +190,28 @@ class Pawn(Piece):
 
         moves = []
 
-        # aux helps with board orientation
-        aux = 1 if self.color == PieceColor.BLACK else -1
+        # sign helps with board orientation
+        sign = 1 if self.color == PieceColor.BLACK else -1
 
         # Checks the condtions to make a capture in the left up square
-        if (in_bound(r+aux,c-1) 
-            and board[r+aux][c-1] 
-            and board[r+aux][c-1].color != self.color):
-            moves.append(Move((r,c,r+aux,c-1,),MoveType.CAPTURE))
+        if (in_bound(r+sign,c-1) 
+            and board[r+sign][c-1] 
+            and board[r+sign][c-1].color != self.color):
+            moves.append(Move((r,c,r+sign,c-1,),MoveType.CAPTURE))
 
         # Checks the condtions to make a capture in the right up square
-        if (in_bound(r+aux,c+1) 
-            and board[r+aux][c+1] 
-            and board[r+aux][c+1].color != self.color):
-            moves.append(Move((r,c,r+aux,c+1),MoveType.CAPTURE))
+        if (in_bound(r+sign,c+1) 
+            and board[r+sign][c+1] 
+            and board[r+sign][c+1].color != self.color):
+            moves.append(Move((r,c,r+sign,c+1),MoveType.CAPTURE))
 
         # Checks if we can go one square up
-        if board[r+aux][c] is None:
-            moves.append(Move((r,c,r+aux,c),MoveType.NORMAL))
+        if board[r+sign][c] is None:
+            moves.append(Move((r,c,r+sign,c),MoveType.NORMAL))
 
             # Checks if we can go two squares up
-            if r == self.initial_row and board[r+2*aux][c] is None:
-                moves.append(Move((r,c,r+2*aux,c),MoveType.NORMAL))
+            if r == self.initial_row and board[r+2*sign][c] is None:
+                moves.append(Move((r,c,r+2*sign,c),MoveType.NORMAL))
 
         return moves    
         

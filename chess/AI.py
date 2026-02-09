@@ -1,8 +1,13 @@
+import queue
+import threading
+import logging
 from enum import Enum
 
 from .piece import Move, PieceColor, MoveType
 from .chessgame import ChessGame, GameState
 from utils.utils import flip_and_negate
+
+logger = logging.getLogger(__name__)
 
 PAWN_PST_WHITE = [
      0,  0,  0,  0,  0,  0,  0,  0,
@@ -111,7 +116,10 @@ class Engine:
     def __init__(self):
         self.MAX_DEPTH = 4
         self.TT = {}
-        self.nodes_visited = 0    
+        self.nodes_visited = 0  
+        self.thread = None  
+        self.thinking = threading.Event()
+        self.move_queue = queue.Queue()
         self.PST = [
         # WHITE
         [
@@ -149,7 +157,7 @@ class Engine:
             moves.insert(0, tt_move)
 
         for move in moves:
-            game.play_move(*move.coords,move.promotion,move_obj=move,search_mode=True)
+            game.play_move(move,search_mode=True)
             score = self.alpha_beta(game, alpha, beta, 1, not isMax, max_depth=max_depth)
 
             if isMax and score > alpha:
@@ -176,7 +184,7 @@ class Engine:
         self.TT[game.zobristHash] = (score,tt_move,max_depth,bound)    
         
         if max_depth == self.MAX_DEPTH:
-            print(self.nodes_visited)
+            logger.info(f"{self.nodes_visited} nodes visited in the last search")
             self.nodes_visited = 0
         
         return tt_move
@@ -213,8 +221,7 @@ class Engine:
             moves.insert(0, tt_move)
 
         for move in moves:    
-
-            game.play_move(*move.coords,move.promotion,move_obj=move,search_mode=True)
+            game.play_move(move,search_mode=True)
             score = self.alpha_beta(game, alpha, beta, depth+1, not isMax, max_depth=max_depth)
 
             if isMax and score > alpha:
@@ -268,3 +275,36 @@ class Engine:
             score += self.PST[1][piece.type.value-1][(x+1)*(y+1)-1]          
 
         return score    
+
+    def start_engine_thread(self, snapshot: ChessGame, stop_event: threading.Event):
+        self.thread = threading.Thread(target=self.gen_best_move,
+                                              args=[snapshot,stop_event],
+                                              daemon=True)
+        self.thread.start()
+
+    def gen_best_move(self,
+                          game_snapshot: ChessGame, 
+                          stop_event: threading.Event) -> None:
+        """
+        Trigger alpha beta pruning algorithm and put the generated move into the engine's queue.
+        """
+
+        self.thinking.set()
+
+        try:
+            if stop_event.is_set():
+                return
+
+            for depth in range(1,self.MAX_DEPTH+1):
+                engine_move = self.alpha_beta_root(game_snapshot,False,max_depth=depth)
+
+            if stop_event.is_set():
+                return
+
+            self.move_queue.put(engine_move)
+            
+        except Exception as e:
+            logger.error(f"Engine Therad crashed {e}")
+
+        finally:
+            self.thinking.clear()

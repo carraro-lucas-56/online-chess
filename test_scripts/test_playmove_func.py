@@ -27,7 +27,7 @@ def run_testcase(file_path):
 
         for move in prev_valid_moves:
             
-            game.play_move(*move.coords,move.promotion)
+            game.play_move_coords(*move.coords,move.promotion)
             move_name = moveObj_to_moveName(move,prev_valid_moves,prev_np_board)
             
             actual_fen = chessgame_to_fen(game)

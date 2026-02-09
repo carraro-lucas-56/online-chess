@@ -1,7 +1,10 @@
 import socket
 import pickle
 import os
+import logging
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 SERVER_IP = os.getenv("SERVER_IP")
@@ -18,7 +21,7 @@ class Network():
             self.client.connect(self.addr)
             return pickle.loads(self.client.recv(2048))
         except socket.error as e:
-            print(str(e))
+            logger.error(f"Error {e} when connecting to the server")
 
     def send(self, data):
         try:
@@ -26,4 +29,5 @@ class Network():
                 self.client.send(pickle.dumps(data))
             return pickle.loads(self.client.recv(2048))
         except socket.error as e:
-            print(str(e))
+            logger.error(f"Error {e} when sending data to the server")
+            

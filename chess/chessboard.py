@@ -235,11 +235,11 @@ class ChessBoard():
 
         if(move.type == MoveType.CASTLE):
             # Rook col
-            (aux,r_col) = (-1,7) if y-y2 < 0 else (1,0)
+            (sign,r_col) = (-1,7) if y-y2 < 0 else (1,0)
             
-            self.board[x][r_col] = self.board[x][y2+aux]
+            self.board[x][r_col] = self.board[x][y2+sign]
             self.board[x][r_col].position = (x,r_col)
-            self.board[x][y2+aux] = None
+            self.board[x][y2+sign] = None
             
     def apply_move(self, move: Move) -> tuple[Piece | None, Piece | None]:
         """

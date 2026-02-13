@@ -39,7 +39,6 @@ def run_testcase(file_path):
                 print(f"Actual fen:   {actual_fen}",end="\n\n")
                
             game.unplay_move(pop=True)
-
             
 testcases = ['standard',
              'castling',

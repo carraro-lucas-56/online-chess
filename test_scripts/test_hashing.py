@@ -16,7 +16,7 @@ def run_testcase(file_path: str) -> None:
         original_hash = game.zobristHash
 
         for move in game.validMoves:
-            game.play_move(*move.coords,move.promotion)
+            game.play_move(move)
             game.unplay_move()    
             if(game.zobristHash != original_hash): 
                 print("wrong")

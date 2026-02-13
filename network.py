@@ -44,13 +44,13 @@ class Network():
         except socket.error as e:
             logger.error(f"Error {e} when receiving data from the server")
     
-    def threaded_receive(self) -> Move | PieceColor | bool:
+    def threaded_receive(self) -> Move | PieceColor:
         try:
             self.queue.put(pickle.loads(self.client.recv(2048)))
         except socket.error as e:
             logger.error(f"Error {e} when receiving data from the server")
     
-    def send_and_receive(self, data) -> Move | PieceColor | bool:
+    def send_and_receive(self, data) -> Move | PieceColor:
         self.send(data)
         return self.receive()    
 

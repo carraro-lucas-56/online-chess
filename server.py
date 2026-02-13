@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s [%(levelname)s] %(name)s %(message)s")
 
-os.getenv("SERVER_IP")
-
 s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
 server = os.getenv("SERVER_IP")
